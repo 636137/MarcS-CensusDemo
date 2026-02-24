@@ -380,7 +380,7 @@ Track census-specific metrics:
 ```
 CENSUS_TABLE_NAME=CensusResponses
 ADDRESS_TABLE_NAME=CensusAddresses
-BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
+BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-5-20250929-v1:0
 GUARDRAIL_ID=your-guardrail-id
 AWS_REGION=us-east-1
 ```

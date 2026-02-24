@@ -166,3 +166,37 @@ output "contact_lens_vocabulary_id" {
   description = "Census custom vocabulary ID for speech recognition"
   value       = var.create_connect_instance ? module.contact_lens[0].vocabulary_id : null
 }
+
+# =============================================================================
+# Validation Module Outputs
+# =============================================================================
+
+output "validation_state_machine_arn" {
+  description = "ARN of the validation Step Functions state machine"
+  value       = var.enable_validation_module ? module.validation[0].state_machine_arn : null
+}
+
+output "validation_orchestrator_function_name" {
+  description = "Name of the validation orchestrator Lambda function"
+  value       = var.enable_validation_module ? module.validation[0].orchestrator_function_name : null
+}
+
+output "validation_ai_validator_function_name" {
+  description = "Name of the AI validator Lambda function"
+  value       = var.enable_validation_module ? module.validation[0].ai_validator_function_name : null
+}
+
+output "validation_report_bucket" {
+  description = "S3 bucket name for validation reports"
+  value       = var.enable_validation_module ? module.validation[0].report_bucket_name : null
+}
+
+output "validation_dashboard_url" {
+  description = "CloudWatch dashboard URL for validation metrics"
+  value       = var.enable_validation_module ? module.validation[0].dashboard_url : null
+}
+
+output "validation_run_command" {
+  description = "CLI command to run validation"
+  value       = var.enable_validation_module ? module.validation[0].run_validation_command : null
+}

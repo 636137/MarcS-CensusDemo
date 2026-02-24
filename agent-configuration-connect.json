@@ -24,7 +24,7 @@
     "_docs": "AI model and conversation behavior settings",
     "modelConfiguration": {
       "provider": "BEDROCK",
-      "modelId": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "modelId": "anthropic.claude-sonnet-4-5-20250929-v1:0",
       "inferenceConfiguration": {
         "temperature": 0.7,
         "topP": 0.9,

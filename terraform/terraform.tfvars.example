@@ -10,7 +10,7 @@ project_name = "census-enumerator"
 owner        = "census-bureau"
 
 # Bedrock Configuration
-bedrock_model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+bedrock_model_id = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 # Lex Configuration
 lex_voice_id                 = "Ruth"  # Using Ruth with generative engine

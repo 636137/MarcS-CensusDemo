@@ -249,6 +249,50 @@ module "monitoring" {
   tags = local.common_tags
 }
 
+# =============================================================================
+# MODULE: Validation and Testing
+# Automated validation suite for deployment verification and AI quality
+# =============================================================================
+module "validation" {
+  source = "./modules/validation"
+  count  = var.enable_validation_module ? 1 : 0
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  # Connect configuration
+  connect_instance_id  = var.create_connect_instance ? module.connect[0].instance_id : var.connect_instance_id
+  connect_instance_arn = var.create_connect_instance ? module.connect[0].instance_arn : "arn:aws:connect:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/${var.connect_instance_id}"
+
+  # Lex configuration
+  lex_bot_id       = module.lex.bot_id
+  lex_bot_alias_id = module.lex.bot_alias_id
+  lex_locale_id    = "en_US"
+
+  # Bedrock configuration
+  bedrock_agent_id       = try(module.bedrock.agent_id, "")
+  bedrock_agent_alias_id = try(module.bedrock.agent_alias_id, "")
+  bedrock_guardrail_id   = try(module.bedrock.guardrail_id, "")
+  bedrock_model_id       = var.bedrock_model_id
+
+  # Lambda functions to validate
+  lambda_arns = module.lambda.function_arns
+
+  # DynamoDB tables to validate
+  dynamodb_table_names = module.dynamodb.table_names
+
+  # Notification settings
+  notification_email = var.validation_notification_email
+
+  # AI validation thresholds
+  ai_accuracy_threshold = var.ai_accuracy_threshold
+  ai_latency_threshold  = var.ai_latency_threshold
+
+  tags = local.common_tags
+
+  depends_on = [module.lex, module.lambda, module.dynamodb]
+}
+
 # Data sources
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}

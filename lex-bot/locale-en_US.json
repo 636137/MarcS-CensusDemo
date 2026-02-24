@@ -23,7 +23,7 @@
       "slotResolutionImprovement": {
         "enabled": true,
         "bedrockModelSpecification": {
-          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
         }
       }
     },
@@ -31,13 +31,13 @@
       "descriptiveBotBuilder": {
         "enabled": true,
         "bedrockModelSpecification": {
-          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
         }
       },
       "sampleUtteranceGeneration": {
         "enabled": true,
         "bedrockModelSpecification": {
-          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+          "modelArn": "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-sonnet-4-5-20250929-v1:0"
         }
       }
     }

@@ -67,7 +67,7 @@
 ```json
 {
   "agentConfiguration": {
-    "foundationModel": "anthropic.claude-3-sonnet...",
+    "foundationModel": "anthropic.claude-sonnet-4-5...",
     "instruction": "...",
     "promptOverrideConfiguration": {...}
   },

@@ -137,7 +137,7 @@ terraform/
 |----------|-------------|---------|
 | `aws_region` | AWS region | `us-east-1` |
 | `environment` | Environment name | `dev` |
-| `bedrock_model_id` | Bedrock model for AI | `anthropic.claude-3-sonnet` |
+| `bedrock_model_id` | Bedrock model for AI | `anthropic.claude-sonnet-4-5` |
 | `lex_voice_id` | Amazon Polly voice | `Ruth` |
 
 ### Security Options

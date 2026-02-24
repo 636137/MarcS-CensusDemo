@@ -1,106 +1,88 @@
 # Government CCaaS in a Box
 
-## 🏛️ What is This?
+[![FedRAMP Ready](https://img.shields.io/badge/FedRAMP-Ready-blue)](FEDRAMP_COMPLIANCE.md)
+[![Terraform](https://img.shields.io/badge/IaC-Terraform-purple)](terraform/)
+[![AWS](https://img.shields.io/badge/Cloud-AWS-orange)](https://aws.amazon.com)
 
-A **complete, ready-to-deploy cloud contact center** designed for government agencies. Deploy an entire customer service operation—including an AI agent that conducts census surveys—with a single command.
+## 🏛️ Overview
 
-**In plain English:** This project gives you everything you need to set up a professional call center in Amazon Web Services (AWS), complete with:
-- An AI that can answer phones and conduct surveys automatically
-- A web chat option for people who prefer typing
-- Human agent routing when the AI needs help
-- Call recording and quality monitoring
-- Security and compliance for government use
-- Disaster recovery and backup
+**Government CCaaS in a Box** is a complete, production-ready cloud contact center designed for government agencies. Deploy an entire customer service operation—including an AI agent that conducts census surveys—with a single Terraform command.
 
-Think of it as a "starter kit" for government contact centers that would normally take months to build.
+### What You Get
 
----
+| Capability | Description |
+|------------|-------------|
+| **AI Census Agent** | Automated phone/chat agent that conducts surveys using Amazon Bedrock |
+| **Full Contact Center** | Amazon Connect with queues, routing, recording, and agent desktops |
+| **FedRAMP Security** | Complete security controls for government compliance |
+| **Disaster Recovery** | Automated failover scripts and cross-region backup |
+| **Automated Testing** | Validation module for continuous quality assurance |
+| **Multi-Tenant Ready** | Architecture patterns for serving multiple agencies |
 
-## 🎯 Who is This For?
+### Target Audience
 
-| Audience | Why You'd Use This |
-|----------|-------------------|
-| **Government IT Teams** | Deploy a FedRAMP-ready contact center without starting from scratch |
+| Audience | Use Case |
+|----------|----------|
+| **Government IT Teams** | Deploy FedRAMP-ready contact centers without starting from scratch |
 | **System Integrators** | Repeatable blueprint for government clients |
 | **Census Bureaus** | Automate data collection with AI |
-| **Agencies with Call Centers** | Modernize legacy phone systems with cloud AI |
-| **AWS Learners** | Real-world example of Connect + Bedrock + Terraform |
+| **Agencies with Call Centers** | Modernize legacy phone systems |
+| **AWS Architects** | Reference implementation of Connect + Bedrock + Terraform |
 
 ---
 
-## 🧩 What's Included?
-
-This project has three main layers:
-
-### Layer 1: The AI Census Agent
-An artificial intelligence that conducts census surveys over phone or chat. It:
-- Greets callers and explains confidentiality
-- Verifies the caller's address
-- Asks how many people live in the household
-- Collects demographic information for each person
-- Provides a confirmation number
-- Can transfer to a human if needed
-
-### Layer 2: Amazon Connect Contact Center
-The complete phone/chat infrastructure:
-- **Phone System**: Claim phone numbers, route calls, play hold music
-- **Chat Widget**: Embed on any website
-- **Agent Desktops**: Interface for human agents
-- **Queues**: Route calls to the right teams
-- **Recording**: Record and transcribe every interaction
-- **Analytics**: Dashboard showing wait times, resolution rates, etc.
-
-### Layer 3: Government Security & Compliance
-Everything needed for FedRAMP authorization:
-- **Encryption**: All data encrypted with keys you control
-- **Audit Logs**: Every action recorded for 7 years
-- **Network Security**: Private network connections, firewall rules
-- **Backup**: Daily backups with disaster recovery
-- **Compliance Monitoring**: Automatic security checks
-
----
-
-## 📊 Visual Overview
+## 📊 Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        GOVERNMENT CCaaS IN A BOX                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   CONSTITUENTS                        AGENTS                                │
-│   ┌─────────┐                        ┌─────────┐                           │
-│   │  Phone  │────┐              ┌────│  Agent  │                           │
-│   └─────────┘    │              │    │ Desktop │                           │
-│   ┌─────────┐    │              │    └─────────┘                           │
-│   │  Chat   │────┤              │                                          │
-│   └─────────┘    │              │                                          │
-│                  ▼              ▼                                          │
-│            ┌──────────────────────────┐                                    │
-│            │     AMAZON CONNECT       │                                    │
-│            │  ┌────────────────────┐  │                                    │
-│            │  │   AI CENSUS AGENT  │  │◄──── Handles 80% of calls          │
-│            │  │  (Amazon Bedrock)  │  │      automatically                 │
-│            │  └────────────────────┘  │                                    │
-│            │  ┌────────────────────┐  │                                    │
-│            │  │   HUMAN QUEUES     │  │◄──── Escalations & complex cases   │
-│            │  └────────────────────┘  │                                    │
-│            └──────────────────────────┘                                    │
-│                        │                                                    │
-│                        ▼                                                    │
-│            ┌──────────────────────────┐                                    │
-│            │     DATA STORAGE         │                                    │
-│            │  Survey Responses        │                                    │
-│            │  Call Recordings         │                                    │
-│            │  Transcripts             │                                    │
-│            └──────────────────────────┘                                    │
-│                        │                                                    │
-│                        ▼                                                    │
-│   ┌────────────────────────────────────────────────────────────────────┐   │
-│   │                    FEDRAMP SECURITY LAYER                          │   │
-│   │  🔐 Encryption  │  📋 Audit Logs  │  🛡️ Firewall  │  💾 Backups   │   │
-│   └────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          GOVERNMENT CCaaS IN A BOX                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   CONSTITUENTS                              AGENTS                              │
+│   ┌─────────┐                              ┌─────────┐                         │
+│   │ 📞 Phone │────┐                    ┌────│  Agent  │                         │
+│   └─────────┘    │                    │    │ Desktop │                         │
+│   ┌─────────┐    │                    │    └─────────┘                         │
+│   │ 💬 Chat  │────┤                    │                                        │
+│   └─────────┘    │                    │                                        │
+│                  ▼                    ▼                                        │
+│            ┌──────────────────────────────────┐                                │
+│            │        AMAZON CONNECT            │                                │
+│            │  ┌────────────────────────────┐  │                                │
+│            │  │    🤖 AI CENSUS AGENT      │  │◄──── Handles 80% of calls      │
+│            │  │  (Amazon Bedrock + Lex)    │  │      automatically             │
+│            │  └────────────────────────────┘  │                                │
+│            │  ┌────────────────────────────┐  │                                │
+│            │  │    👥 HUMAN QUEUES         │  │◄──── Escalations & complex     │
+│            │  │  (General, Spanish, etc.)  │  │      cases                     │
+│            │  └────────────────────────────┘  │                                │
+│            │  ┌────────────────────────────┐  │                                │
+│            │  │    📊 CONTACT LENS         │  │◄──── Sentiment, transcription  │
+│            │  │  (Real-time analytics)     │  │      quality scoring           │
+│            │  └────────────────────────────┘  │                                │
+│            └──────────────────────────────────┘                                │
+│                          │                                                      │
+│                          ▼                                                      │
+│            ┌──────────────────────────────────┐                                │
+│            │         DATA LAYER               │                                │
+│            │  ┌───────────┐  ┌───────────┐   │                                │
+│            │  │ DynamoDB  │  │    S3     │   │                                │
+│            │  │ (Surveys) │  │(Recordings)│   │                                │
+│            │  └───────────┘  └───────────┘   │                                │
+│            └──────────────────────────────────┘                                │
+│                          │                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                        FEDRAMP SECURITY LAYER                           │  │
+│   │  🔐 KMS      │ 📋 CloudTrail │ 🛡️ WAF │ 🌐 VPC │ ✅ Config │ 💾 Backup  │  │
+│   │  Encryption  │  Audit Logs   │ Firewall│ Network│ Compliance│    DR     │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                          │                                                      │
+│   ┌─────────────────────────────────────────────────────────────────────────┐  │
+│   │                        VALIDATION & MONITORING                          │  │
+│   │  🧪 Validation Module  │  📈 CloudWatch  │  🚨 Alarms  │  📄 Reports    │  │
+│   └─────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -110,209 +92,225 @@ Everything needed for FedRAMP authorization:
 ```
 Government-CCaaS-in-a-Box/
 │
-├── 📄 README.md                         ◄── You are here
-├── 📄 DEPLOYMENT_GUIDE.md               ◄── Step-by-step setup instructions
-├── 📄 FEDRAMP_COMPLIANCE.md             ◄── Security controls documentation
-├── 📄 SERVICE_QUOTAS_AND_LIMITS.md      ◄── AWS quotas, multi-tenant sizing, gotchas
-├── 📄 DISASTER_RECOVERY.md              ◄── DR procedures and failover runbook
-├── 📄 AGENT_OPTIONS_COMPARISON.md       ◄── Bedrock vs Connect AI comparison
-├── 📄 WELL_ARCHITECTED_LENS.json        ◄── AWS Well-Architected custom lens
+├── 📄 DOCUMENTATION
+│   ├── README.md                           ◄── You are here
+│   ├── DEPLOYMENT_GUIDE.md                 ◄── Step-by-step deployment instructions
+│   ├── FEDRAMP_COMPLIANCE.md               ◄── Security controls & compliance mapping
+│   ├── SERVICE_QUOTAS_AND_LIMITS.md        ◄── AWS limits, multi-tenant sizing, gotchas
+│   ├── DISASTER_RECOVERY.md                ◄── DR procedures, RTO/RPO, failover runbooks
+│   ├── AGENT_OPTIONS_COMPARISON.md         ◄── Bedrock vs Connect Native AI comparison
+│   ├── WELL_ARCHITECTED_LENS.json          ◄── Custom lens for AWS Console import
+│   └── docs/
+│       └── VALIDATION_MODULE.md            ◄── Automated testing documentation
 │
 ├── 🤖 AI AGENT CONFIGURATION
-│   ├── agent-prompt.md                  ◄── AI personality & conversation rules
-│   ├── agent-configuration-bedrock.json ◄── Amazon Bedrock Agent setup
-│   ├── agent-configuration-connect.json ◄── Connect Native AI setup
-│   ├── survey-questions.json            ◄── Census survey questions
-│   └── contact-flow.json                ◄── Call routing logic
+│   ├── agent-prompt.md                     ◄── AI personality & conversation rules
+│   ├── agent-configuration-bedrock.json    ◄── Amazon Bedrock Agent setup
+│   ├── agent-configuration-connect.json    ◄── Connect Native AI setup
+│   ├── survey-questions.json               ◄── Census survey question definitions
+│   └── contact-flow.json                   ◄── Call routing logic (IVR)
 │
-├── 📦 lambda/                           ◄── Backend code (Node.js)
-│   ├── index.js                         ◄── Address lookup, save survey
-│   └── package.json                     ◄── Dependencies
+├── 📦 lambda/                              ◄── Backend Lambda functions
+│   ├── index.js                            ◄── Address lookup, survey save logic
+│   └── package.json                        ◄── Node.js dependencies
 │
-├── 🗣️ lex-bot/                          ◄── Voice recognition (Amazon Lex)
-│   ├── bot-definition.json              ◄── Bot configuration
-│   ├── locale-en_US.json                ◄── English language settings
-│   ├── slot-types.json                  ◄── Custom data types
-│   ├── intents.json                     ◄── What users can say
-│   └── lambda/fulfillment.js            ◄── Response logic
+├── 🗣️ lex-bot/                             ◄── Amazon Lex voice/chat bot
+│   ├── bot-definition.json                 ◄── Bot configuration
+│   ├── locale-en_US.json                   ◄── English language settings
+│   ├── slot-types.json                     ◄── Custom data types (race, relationship)
+│   ├── intents.json                        ◄── User intent definitions
+│   └── lambda/
+│       └── fulfillment.js                  ◄── Intent fulfillment logic
 │
-└── 🏗️ terraform/                        ◄── Infrastructure as Code
-    ├── main.tf                          ◄── Main orchestration
-    ├── variables.tf                     ◄── Configuration options
-    ├── outputs.tf                       ◄── What gets created
-    ├── fedramp.tf                       ◄── FedRAMP compliance toggle
-    ├── terraform.tfvars.example         ◄── Sample configuration
+├── 🔧 scripts/                             ◄── Automation scripts
+│   ├── validate.sh                         ◄── Run validation tests (CLI)
+│   └── dr/                                 ◄── Disaster recovery scripts
+│       ├── dr-controller.sh                ◄── Master DR orchestration
+│       ├── failover-1-infrastructure.sh    ◄── Phase 1: Core infrastructure
+│       ├── failover-2-connect.sh           ◄── Phase 2: Connect instance
+│       ├── failover-3-agents.sh            ◄── Phase 3: AI components
+│       ├── failback.sh                     ◄── Return to primary region
+│       ├── sync-connect-config.sh          ◄── Sync Connect configuration
+│       ├── validate-failover.sh            ◄── Verify DR readiness
+│       └── dr-config.env.example           ◄── DR configuration template
+│
+└── 🏗️ terraform/                           ◄── Infrastructure as Code
+    ├── main.tf                             ◄── Main orchestration
+    ├── variables.tf                        ◄── All configuration options
+    ├── outputs.tf                          ◄── Created resource references
+    ├── fedramp.tf                          ◄── FedRAMP module orchestration
+    ├── terraform.tfvars.example            ◄── Sample configuration file
     │
-    └── modules/                         ◄── Modular infrastructure components
+    └── modules/                            ◄── Modular Terraform components
         │
         ├── 📞 CONTACT CENTER
-        │   ├── connect/                 ◄── Amazon Connect instance
-        │   ├── connect-queues/          ◄── Call routing queues
-        │   ├── connect-users/           ◄── Agent accounts
-        │   └── contact-lens/            ◄── Call analytics & quality
+        │   ├── connect/                    ◄── Amazon Connect instance
+        │   ├── connect-queues/             ◄── Call routing queues
+        │   ├── connect-users/              ◄── Agent & supervisor accounts
+        │   └── contact-lens/               ◄── Analytics, transcription, QA
         │
-        ├── 🤖 AI/ML
-        │   ├── lex/                      ◄── Voice/chat bot
-        │   ├── bedrock/                  ◄── AI guardrails & safety
-        │   └── lambda/                   ◄── Business logic functions
+        ├── 🤖 AI / ML
+        │   ├── lex/                        ◄── Amazon Lex bot (NLU)
+        │   ├── bedrock/                    ◄── AI guardrails & safety filters
+        │   └── lambda/                     ◄── Business logic functions
         │
-        ├── 💾 DATA
-        │   ├── dynamodb/                 ◄── Survey response database
-        │   └── monitoring/               ◄── CloudWatch dashboards
+        ├── 💾 DATA & MONITORING
+        │   ├── dynamodb/                   ◄── Survey response storage
+        │   ├── monitoring/                 ◄── CloudWatch dashboards & alarms
+        │   └── validation/                 ◄── Automated testing infrastructure
         │
-        └── 🔒 SECURITY (FedRAMP)
-            ├── kms/                      ◄── Encryption keys
-            ├── cloudtrail/               ◄── Audit logging
-            ├── vpc/                      ◄── Network isolation
-            ├── waf/                      ◄── Web firewall
-            ├── config-rules/             ◄── Compliance monitoring
-            ├── backup/                   ◄── Disaster recovery
-            └── iam/                      ◄── Access control
+        ├── 🔒 SECURITY (FedRAMP)
+        │   ├── kms/                        ◄── Customer-managed encryption keys
+        │   ├── cloudtrail/                 ◄── API audit logging (7-year retention)
+        │   ├── vpc/                        ◄── Network isolation & security groups
+        │   ├── waf/                        ◄── Web application firewall
+        │   ├── config-rules/               ◄── Compliance monitoring rules
+        │   └── backup/                     ◄── Automated backup & DR
+        │
+        └── 🔐 IAM
+            └── iam/                        ◄── Roles, policies, permissions
 ```
 
 ---
 
-## 🚀 How to Deploy
+## 🚀 Quick Start
 
 ### Prerequisites
 
-Before starting, you need:
-1. **An AWS Account** - Government accounts work best, but commercial works too
-2. **AWS CLI installed** - Command-line tool for AWS ([install guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
-3. **Terraform installed** (version 1.5+) - Infrastructure tool ([install guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli))
-4. **Amazon Bedrock access** - Request Claude model access in AWS Console
+| Requirement | Version | Why |
+|-------------|---------|-----|
+| AWS CLI | 2.x | AWS authentication |
+| Terraform | >= 1.5.0 | Infrastructure deployment |
+| Node.js | >= 18 | Lambda functions |
+| Amazon Bedrock | Claude access enabled | AI model |
 
-### Quick Start (5 Commands)
+### Deploy in 5 Commands
 
 ```bash
-# 1. Download this project
+# 1. Clone the repository
 git clone https://github.com/636137/MarcS-CensusDemo.git
 cd MarcS-CensusDemo/terraform
 
-# 2. Copy and edit the configuration file
+# 2. Create your configuration file
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your settings (see Configuration section below)
+# Edit terraform.tfvars with your settings
 
 # 3. Initialize Terraform
 terraform init
 
-# 4. Preview what will be created
+# 4. Preview the deployment
 terraform plan
 
 # 5. Deploy everything
 terraform apply
 ```
 
-**That's it!** In about 15-20 minutes, you'll have a complete contact center.
+**Deployment time:** ~15-20 minutes for full stack including FedRAMP modules.
 
-### Configuration Options
-
-Edit `terraform.tfvars` to customize your deployment:
+### Minimal Configuration
 
 ```hcl
-# Basic Settings
-project_name = "census-agent"      # Name prefix for all resources
-environment  = "production"        # production, staging, or development
-aws_region   = "us-east-1"         # AWS region to deploy to
+# terraform.tfvars - Minimum required settings
 
-# Connect Instance (creates a new contact center)
-create_connect_instance = true     # Set to true to create new instance
+project_name = "census-ccaas"
+environment  = "production"
+aws_region   = "us-east-1"
+owner        = "your-agency"
+
+# Create a new Connect instance
+create_connect_instance = true
 connect_instance_alias  = "census-contact-center"
 
-# AI Settings
-bedrock_model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+# AI Configuration
+bedrock_model_id = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 
-# SECURITY: FedRAMP Compliance (HIGHLY RECOMMENDED FOR GOVERNMENT)
-enable_fedramp_compliance = true   # Deploys all security controls
-deploy_in_vpc             = true   # Private network
-enable_waf                = true   # Web firewall
-enable_backup             = true   # Automated backups
-security_contact_email    = "security@agency.gov"
-allowed_countries         = ["US"] # Restrict access to US only
+# RECOMMENDED: Enable FedRAMP compliance
+enable_fedramp_compliance = true
 ```
 
 ---
 
-## 🔒 FedRAMP Compliance Explained
+## 🔒 FedRAMP Compliance
 
-**What is FedRAMP?** It's the government's security standard for cloud services. If you're deploying for a federal agency, you likely need FedRAMP compliance.
+When `enable_fedramp_compliance = true`, the following security controls are automatically deployed:
 
-When you set `enable_fedramp_compliance = true`, the following security controls are automatically deployed:
+| Module | What It Does | FedRAMP Controls |
+|--------|--------------|------------------|
+| **KMS** | Customer-managed encryption keys for all data | SC-12, SC-13, SC-28 |
+| **CloudTrail** | API audit logging with 7-year retention | AU-2, AU-3, AU-9, AU-12 |
+| **VPC** | Network isolation with private subnets | SC-7, SC-8, AC-4 |
+| **WAF** | Web firewall with rate limiting, geo-blocking | SC-5, SI-3 |
+| **Config Rules** | Continuous compliance monitoring | CA-7, CM-6 |
+| **Backup** | Automated backups with cross-region copy | CP-9, CP-10 |
 
-### Security Controls Summary
+### Security Features
 
-| What | Why | FedRAMP Control |
-|------|-----|-----------------|
-| **Encryption Keys (KMS)** | All data encrypted with keys only you control | SC-12, SC-13, SC-28 |
-| **Audit Logging (CloudTrail)** | Every action recorded for 7 years | AU-2, AU-3, AU-9, AU-12 |
-| **Network Isolation (VPC)** | Private network, no public internet exposure | SC-7, SC-8, AC-4 |
-| **Web Firewall (WAF)** | Block attacks, US-only access | SC-5, SI-3 |
-| **Compliance Monitoring (Config)** | Automatic security checks | CA-7, CM-6 |
-| **Automated Backups** | Daily/weekly/monthly backups | CP-9, CP-10 |
+- **Encryption at rest**: AES-256 using customer-managed KMS keys
+- **Encryption in transit**: TLS 1.2/1.3 enforced
+- **Access logging**: Every API call logged to CloudTrail
+- **Network isolation**: VPC with private subnets, no public IPs
+- **Geographic restriction**: Optionally limit access to US only
+- **PII protection**: Bedrock Guardrails block sensitive data
 
-**Cost Impact:** FedRAMP controls add approximately $150-300/month to base costs.
+**Cost impact:** FedRAMP modules add approximately **$150-300/month**.
 
-For detailed control mappings, see [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md).
+See [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md) for complete control mappings.
 
 ---
 
-## 🤖 The AI Census Agent
+## 🤖 AI Census Agent
 
 ### How the Survey Works
 
 ```
-1. GREETING
-   "Hello! This is the Census Bureau AI assistant. This call 
-   may be recorded for quality assurance. All information you 
-   provide is protected under Title 13 of the U.S. Code."
-
-2. ADDRESS VERIFICATION
-   "I show your address as 123 Main Street, Anytown, State 12345.
-   Is this correct?"
-
-3. HOUSEHOLD COUNT
-   "As of April 1st, how many people were living or staying 
-   at this address?"
-
-4. FOR EACH PERSON (repeat as needed)
-   - First name, Last name
-   - Relationship to person 1 (spouse, child, parent, etc.)
-   - Sex (male/female)
-   - Date of birth
-   - Hispanic/Latino origin (yes/no)
-   - Race (can select multiple)
-
-5. HOUSING INFORMATION
-   "Is this house owned, rented, or occupied without payment?"
-
-6. CONFIRMATION
-   "Your confirmation number is ABC123. Thank you for 
-   completing the census!"
+┌─────────────────────────────────────────────────────────────────┐
+│  1. GREETING                                                    │
+│     "Hello! This is the Census Bureau AI assistant..."          │
+├─────────────────────────────────────────────────────────────────┤
+│  2. ADDRESS VERIFICATION                                        │
+│     "I show your address as 123 Main St. Is this correct?"      │
+├─────────────────────────────────────────────────────────────────┤
+│  3. HOUSEHOLD COUNT                                             │
+│     "How many people were living at this address on April 1st?" │
+├─────────────────────────────────────────────────────────────────┤
+│  4. FOR EACH PERSON (loop)                                      │
+│     • First name, Last name                                     │
+│     • Relationship to Person 1                                  │
+│     • Sex, Date of Birth                                        │
+│     • Hispanic/Latino origin                                    │
+│     • Race (can select multiple)                                │
+├─────────────────────────────────────────────────────────────────┤
+│  5. HOUSING INFORMATION                                         │
+│     "Is this home owned, rented, or occupied without payment?"  │
+├─────────────────────────────────────────────────────────────────┤
+│  6. CONFIRMATION                                                │
+│     "Your confirmation number is ABC123. Thank you!"            │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Safety Features
+### Safety & Guardrails
 
-The AI has built-in protections:
-
-**What it will NEVER ask or accept:**
+**The AI will NEVER ask for or accept:**
 - ❌ Social Security Numbers
 - ❌ Income or financial information
-- ❌ Immigration status or citizenship
+- ❌ Immigration status
 - ❌ Political opinions
 - ❌ Information about neighbors
 
-**When it transfers to a human:**
-- Caller says "speak to a person" or "agent"
-- Three misunderstandings in a row
-- Complex situations (shared custody, military, students away at college)
+**Automatic escalation to human when:**
+- Caller says "agent" or "speak to a person"
+- 3 consecutive misunderstandings
+- Complex situations (students, military, shared custody)
 - Caller expresses frustration
 
-### Two AI Options
+### AI Options Comparison
 
-| Option | Best For | Complexity |
-|--------|----------|------------|
-| **Amazon Bedrock Agent** | Maximum flexibility, use AI across multiple channels | Medium |
-| **Connect Native AI** | Simpler setup, everything stays in Connect | Easy |
+| Feature | Bedrock Agent | Connect Native AI |
+|---------|---------------|-------------------|
+| **Complexity** | Medium | Easy |
+| **Flexibility** | Maximum customization | Simpler, integrated |
+| **Multi-channel** | Voice + Chat + API | Voice + Chat |
+| **Best for** | Complex workflows | Quick deployment |
 
 See [AGENT_OPTIONS_COMPARISON.md](AGENT_OPTIONS_COMPARISON.md) for detailed comparison.
 
@@ -320,244 +318,362 @@ See [AGENT_OPTIONS_COMPARISON.md](AGENT_OPTIONS_COMPARISON.md) for detailed comp
 
 ## 📞 Amazon Connect Contact Center
 
-### What Gets Created
+### Components Created
 
-When `create_connect_instance = true`:
-
-| Component | Description |
-|-----------|-------------|
-| **Connect Instance** | Your contact center "headquarters" |
-| **Phone Numbers** | Claim toll-free or local numbers |
-| **Contact Flows** | Call routing logic (IVR) |
-| **Queues** | Where calls wait for agents |
-| **Routing Profiles** | Which queues agents can take calls from |
-| **Hours of Operation** | Business hours configuration |
-| **Agent Accounts** | Login credentials for human agents |
+| Component | Purpose |
+|-----------|---------|
+| **Connect Instance** | Contact center "headquarters" |
+| **Contact Flows** | IVR call routing logic |
+| **Queues** | Census General, Spanish, Supervisor, Callback |
+| **Routing Profiles** | Agent skill-based routing |
+| **Hours of Operation** | Business hours (M-F 8am-8pm, Sat 9am-1pm) |
+| **Security Profiles** | Agent, Supervisor, Admin access levels |
+| **Users** | Pre-configured test agents and supervisors |
 
 ### Contact Lens Analytics
 
-Call quality monitoring includes:
-- **Transcription**: Every call converted to text
-- **Sentiment Analysis**: Detect caller mood (positive/negative/neutral)
-- **Keyword Spotting**: Alert when specific words are said
-- **Quality Scores**: Automatic evaluation of each call
+- **Real-time transcription**: Every call converted to text
+- **Sentiment analysis**: Detect caller mood (positive/negative/neutral)
+- **Keyword alerting**: Notify supervisors of specific phrases
+- **Quality scores**: Automatic call evaluation
+- **Custom vocabulary**: Census-specific terms for better accuracy
 
 ---
 
-## 💾 Data Storage
+## 🧪 Validation Module
 
-### Survey Responses
+The Validation Module provides automated testing for deployments:
 
-Stored in DynamoDB (a fast, serverless database):
+### Test Categories
 
-```json
-{
-  "caseId": "CENSUS-2024-ABC123",
-  "timestamp": "2024-03-15T14:30:00Z",
-  "status": "COMPLETED",
-  "address": {
-    "street": "123 Main Street",
-    "city": "Anytown",
-    "state": "ST",
-    "zip": "12345"
-  },
-  "householdCount": 3,
-  "persons": [
-    {
-      "firstName": "John",
-      "lastName": "Doe",
-      "relationship": "SELF",
-      "sex": "Male",
-      "dateOfBirth": "1985-06-15",
-      "hispanicOrigin": "No",
-      "race": ["White"]
-    }
-  ],
-  "housing": {
-    "tenure": "OWNED"
-  },
-  "contactInfo": {
-    "phone": "+12025551234"
-  }
+| Category | What's Tested |
+|----------|---------------|
+| **Functional** | Connect instance, Lex bot, Lambda functions, DynamoDB tables |
+| **AI Quality** | Intent recognition accuracy, response latency, guardrail effectiveness |
+| **Security** | AWS Config compliance, FedRAMP conformance pack |
+
+### Running Tests
+
+```bash
+# Run all validation tests
+./scripts/validate.sh all
+
+# Run specific test categories
+./scripts/validate.sh functional
+./scripts/validate.sh ai
+./scripts/validate.sh security
+
+# Check recent test status
+./scripts/validate.sh status
+
+# Download latest HTML report
+./scripts/validate.sh report
+```
+
+### Enable in Terraform
+
+```hcl
+enable_validation_module = true
+validation_notification_email = "alerts@agency.gov"
+ai_accuracy_threshold = 0.85   # 85% minimum
+ai_latency_threshold  = 3000   # 3 second max
+```
+
+**Cost:** ~$24/month for automated daily testing.
+
+See [docs/VALIDATION_MODULE.md](docs/VALIDATION_MODULE.md) for full documentation.
+
+---
+
+## 🔄 Disaster Recovery
+
+### DR Architecture
+
+| Metric | Target |
+|--------|--------|
+| **RTO** (Recovery Time Objective) | 4 hours |
+| **RPO** (Recovery Point Objective) | 1 hour |
+| **Backup Frequency** | Daily full, hourly incremental |
+| **Retention** | 35 days standard, 7 years compliance |
+
+### DR Scripts
+
+```bash
+# Run full disaster recovery failover
+./scripts/dr/dr-controller.sh failover
+
+# Individual phases
+./scripts/dr/failover-1-infrastructure.sh  # VPC, security
+./scripts/dr/failover-2-connect.sh         # Connect instance
+./scripts/dr/failover-3-agents.sh          # Lex, Lambda, Bedrock
+
+# Return to primary region
+./scripts/dr/failback.sh
+
+# Sync Connect configuration between regions
+./scripts/dr/sync-connect-config.sh
+
+# Validate DR readiness
+./scripts/dr/validate-failover.sh
+```
+
+### Setup DR
+
+```bash
+# 1. Copy and configure DR settings
+cp scripts/dr/dr-config.env.example scripts/dr/dr-config.env
+# Edit with your primary/secondary regions
+
+# 2. Validate DR readiness
+./scripts/dr/validate-failover.sh
+```
+
+See [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) for complete runbooks.
+
+---
+
+## 📊 Service Quotas & Multi-Tenancy
+
+### Key AWS Quotas
+
+| Service | Default Limit | Consideration |
+|---------|---------------|---------------|
+| Connect concurrent calls | 100 | Request increase for production |
+| Lex requests/second | 10,000 | Usually sufficient |
+| Bedrock tokens/minute | Varies by model | Monitor usage |
+| DynamoDB RCU/WCU | On-demand scales automatically | Use provisioned for predictable load |
+
+### Multi-Tenant Architecture
+
+The solution supports two multi-tenant patterns:
+
+| Pattern | Use Case | Isolation |
+|---------|----------|-----------|
+| **Shared Infrastructure** | Cost-sensitive, similar agencies | Logical separation via tags |
+| **Dedicated Instances** | High security, large agencies | Full AWS account separation |
+
+### Tagging Strategy
+
+```hcl
+# All resources tagged for cost allocation and ABAC
+tags = {
+  Project     = "Government-CCaaS"
+  Environment = "production"
+  Agency      = "census-bureau"
+  CostCenter  = "CC-12345"
+  Compliance  = "FedRAMP-Moderate"
+  DataClass   = "PII"
 }
 ```
 
-### Data Security
-
-- **Encrypted at rest**: AES-256 encryption using your KMS keys
-- **Encrypted in transit**: TLS 1.2/1.3 for all connections
-- **Access logged**: Every read/write recorded in CloudTrail
-- **Backed up daily**: Automatic backups with 35-day retention
+See [SERVICE_QUOTAS_AND_LIMITS.md](SERVICE_QUOTAS_AND_LIMITS.md) for complete guidance.
 
 ---
 
-## 💰 Cost Estimate
+## 💰 Cost Estimates
 
 ### Monthly Costs by Scale
 
-| Scale | Calls/Month | Chat/Month | Estimated Cost |
-|-------|-------------|------------|----------------|
-| **Small** | 1,000 | 500 | $300-500/month |
-| **Medium** | 10,000 | 5,000 | $1,500-2,500/month |
-| **Large** | 100,000 | 50,000 | $10,000-15,000/month |
+| Scale | Calls/Month | Estimated Cost |
+|-------|-------------|----------------|
+| **Development** | 100 | $200-300 |
+| **Small** | 1,000 | $400-600 |
+| **Medium** | 10,000 | $1,500-2,500 |
+| **Large** | 100,000 | $10,000-15,000 |
 
 ### Cost Breakdown
 
-| Service | What it does | Cost basis |
-|---------|-------------|------------|
-| **Amazon Connect** | Phone/chat infrastructure | ~$0.018/min voice, $0.004/message chat |
-| **Amazon Bedrock (Claude)** | AI responses | ~$0.003/1K input tokens, $0.015/1K output tokens |
-| **Amazon Lex** | Voice recognition | ~$0.004/voice request |
-| **DynamoDB** | Data storage | ~$0.25/GB/month + read/write |
-| **Lambda** | Backend code | ~$0.20/million requests |
-| **FedRAMP modules** | Security controls | ~$150-300/month base |
+| Service | Cost Basis |
+|---------|------------|
+| **Amazon Connect** | ~$0.018/min voice, $0.004/message chat |
+| **Amazon Bedrock** | ~$0.003/1K input tokens, $0.015/1K output |
+| **Amazon Lex** | ~$0.004/voice request |
+| **DynamoDB** | ~$0.25/GB/month + throughput |
+| **Lambda** | ~$0.20/million invocations |
+| **FedRAMP Modules** | ~$150-300/month base |
+| **Validation Module** | ~$24/month |
 
-**Note:** These are estimates. Actual costs depend on call duration, conversation length, and data volume. Use the [AWS Pricing Calculator](https://calculator.aws/) for precise estimates.
+### Cost Optimization Tips
 
----
+```hcl
+# Development environment - disable expensive features
+enable_fedramp_compliance = false
+enable_backup = false
+enable_validation_module = false
 
-## 🔧 Customization Guide
-
-| What You Want to Change | What to Edit |
-|------------------------|--------------|
-| AI personality and responses | [agent-prompt.md](agent-prompt.md) |
-| Survey questions | [survey-questions.json](survey-questions.json) |
-| Call routing logic | [contact-flow.json](contact-flow.json) |
-| AI safety rules | `agent-configuration-*.json` |
-| Database structure | `terraform/modules/dynamodb/` |
-| Security settings | `terraform.tfvars` |
-| Agent queues | `terraform/modules/connect-queues/` |
-
----
-
-## ❓ Frequently Asked Questions
-
-### Setup Questions
-
-**Q: How long does deployment take?**
-A: About 15-20 minutes for the full stack, including FedRAMP modules.
-
-**Q: Do I need an existing AWS account?**
-A: Yes, you need an AWS account. Government agencies can use AWS GovCloud for highest compliance.
-
-**Q: Can I deploy to AWS GovCloud?**
-A: Yes. Change `aws_region` to a GovCloud region (e.g., `us-gov-west-1`).
-
-**Q: What permissions do I need?**
-A: Administrator access for initial deployment. Create restricted roles for ongoing operations.
-
-### Usage Questions
-
-**Q: Can people complete the survey on a website instead of calling?**
-A: Yes! The chat widget can be embedded on any website.
-
-**Q: What if the AI doesn't understand someone?**
-A: After 3 failed attempts, it transfers to a human agent.
-
-**Q: Can this work in other languages?**
-A: The base configuration is English only. Add more languages by creating additional Lex bot locales.
-
-**Q: How do I train the AI on different questions?**
-A: Edit `agent-prompt.md` (AI behavior) and `survey-questions.json` (specific questions).
-
-### Cost Questions
-
-**Q: What's the minimum cost to run this?**
-A: Around $200-300/month for the base infrastructure with FedRAMP compliance, even with zero calls.
-
-**Q: How can I reduce costs for development?**
-A: Set `enable_fedramp_compliance = false` and `enable_backup = false` for dev environments.
-
-**Q: Is this cheaper than human agents?**
-A: For high-volume, repetitive surveys, yes. The AI handles ~80% of calls at roughly 1/10th the cost per interaction.
-
-### Security Questions
-
-**Q: Is this secure enough for government use?**
-A: With `enable_fedramp_compliance = true`, it implements controls for FedRAMP Moderate baseline. Complete authorization requires organizational policies and a 3PAO assessment.
-
-**Q: Where is the data stored?**
-A: In your AWS account, in the region you specify. With FedRAMP mode, data never leaves your VPC.
-
-**Q: Can I use this for PII (personally identifiable information)?**
-A: Yes. The encryption, access controls, and audit logging are designed for PII handling.
-
-### Support Questions
-
-**Q: Something isn't working. Where do I look?**
-A: Check CloudWatch Logs in the AWS Console. Each Lambda function logs errors there.
-
-**Q: How do I update the AI behavior?**
-A: Edit `agent-prompt.md` and redeploy with `terraform apply`.
-
-**Q: Can I get professional support?**
-A: AWS offers paid support plans. System integrators can also help deploy and customize this solution.
+# Production - enable everything
+enable_fedramp_compliance = true
+enable_backup = true
+enable_cross_region_backup = true
+enable_validation_module = true
+```
 
 ---
 
-## 📚 Related Documentation
+## 🔧 Configuration Reference
+
+### All Terraform Variables
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `project_name` | string | required | Resource name prefix |
+| `environment` | string | required | dev/staging/production |
+| `aws_region` | string | us-east-1 | Deployment region |
+| `create_connect_instance` | bool | false | Create new Connect instance |
+| `connect_instance_alias` | string | "" | Connect instance name |
+| `bedrock_model_id` | string | claude-sonnet-4.5 | AI model |
+| `enable_fedramp_compliance` | bool | false | Deploy security modules |
+| `deploy_in_vpc` | bool | false | Use VPC network isolation |
+| `enable_waf` | bool | false | Deploy web firewall |
+| `enable_backup` | bool | true | Enable AWS Backup |
+| `enable_cross_region_backup` | bool | false | Copy backups to DR region |
+| `enable_validation_module` | bool | false | Deploy testing infrastructure |
+| `ai_accuracy_threshold` | number | 0.85 | AI quality threshold |
+| `ai_latency_threshold` | number | 3000 | Max AI response time (ms) |
+| `notification_email` | string | "" | Alert email address |
+| `waf_allowed_countries` | list | ["US"] | Geo-restriction |
+
+### Key Files to Customize
+
+| File | Purpose |
+|------|---------|
+| `terraform/terraform.tfvars` | Your deployment configuration |
+| `agent-prompt.md` | AI personality and behavior |
+| `survey-questions.json` | Census question wording |
+| `contact-flow.json` | Call routing logic |
+
+---
+
+## ❓ Troubleshooting
+
+### Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| "Bedrock model not found" | Enable model access in AWS Console → Bedrock → Model access |
+| "Connect instance creation failed" | Check Connect service quotas, ensure unique alias |
+| "Lex bot not responding" | Verify bot is built and alias deployed |
+| "Lambda timeout" | Increase memory/timeout in terraform variables |
+| "FedRAMP deployment fails" | Ensure all required permissions for KMS, CloudTrail |
+
+### Debugging Commands
+
+```bash
+# Check deployment status
+terraform output
+
+# View Lambda logs
+aws logs tail /aws/lambda/{function-name} --follow
+
+# Check Connect instance
+aws connect describe-instance --instance-id {id}
+
+# Verify Lex bot status
+aws lexv2-models describe-bot --bot-id {id}
+
+# Run validation tests
+./scripts/validate.sh all
+```
+
+### Getting Help
+
+1. **CloudWatch Logs**: Check Lambda function logs
+2. **AWS Config**: View compliance status
+3. **Validation Reports**: Run `./scripts/validate.sh report`
+4. **CloudTrail**: Audit API calls for errors
+
+---
+
+## 📚 Documentation Index
 
 | Document | Description |
 |----------|-------------|
-| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Detailed step-by-step deployment instructions |
-| [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md) | Complete FedRAMP control mapping and compliance guide |
-| [SERVICE_QUOTAS_AND_LIMITS.md](SERVICE_QUOTAS_AND_LIMITS.md) | AWS quotas, multi-tenant architecture, and gotchas |
-| [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | DR procedures, failover scripts, and runbooks |
-| [AGENT_OPTIONS_COMPARISON.md](AGENT_OPTIONS_COMPARISON.md) | Bedrock Agent vs Connect Native AI comparison |
-| [WELL_ARCHITECTED_LENS.json](WELL_ARCHITECTED_LENS.json) | Custom Well-Architected lens for AWS Console import |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Detailed step-by-step deployment |
+| [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md) | Security controls and compliance |
+| [SERVICE_QUOTAS_AND_LIMITS.md](SERVICE_QUOTAS_AND_LIMITS.md) | AWS quotas, multi-tenant patterns |
+| [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | DR procedures and runbooks |
+| [AGENT_OPTIONS_COMPARISON.md](AGENT_OPTIONS_COMPARISON.md) | Bedrock vs Connect AI comparison |
+| [docs/VALIDATION_MODULE.md](docs/VALIDATION_MODULE.md) | Automated testing documentation |
+| [WELL_ARCHITECTED_LENS.json](WELL_ARCHITECTED_LENS.json) | AWS Well-Architected custom lens |
+| [terraform/README.md](terraform/README.md) | Terraform-specific documentation |
 
-### Importing the Well-Architected Custom Lens
-
-To validate your deployment against Government CCaaS best practices:
+### Import Well-Architected Custom Lens
 
 ```bash
-# Import the custom lens into AWS Well-Architected Tool
+# Import the custom lens for deployment review
 aws wellarchitected import-lens \
   --json-string file://WELL_ARCHITECTED_LENS.json \
   --lens-alias "government-ccaas" \
   --region us-east-1
-
-# List your custom lenses to verify
-aws wellarchitected list-lenses --lens-type CUSTOM_SELF
 ```
-
-Or import via AWS Console:
-1. Go to **AWS Well-Architected Tool** → **Custom lenses**
-2. Click **Create custom lens**
-3. Upload `WELL_ARCHITECTED_LENS.json`
-4. Create a new workload and select the lens for review
 
 ---
 
-## 🏁 Quick Reference
+## 📋 Terraform Modules Reference
 
-### Key Terraform Commands
+### Contact Center Modules
+
+| Module | Description | Key Outputs |
+|--------|-------------|-------------|
+| `connect` | Amazon Connect instance | `instance_id`, `instance_arn` |
+| `connect-queues` | Call queues and routing profiles | `queue_ids`, `routing_profile_ids` |
+| `connect-users` | Agent and supervisor accounts | `user_ids`, `security_profile_ids` |
+| `contact-lens` | Analytics rules and vocabulary | `rule_ids`, `vocabulary_id` |
+
+### AI/ML Modules
+
+| Module | Description | Key Outputs |
+|--------|-------------|-------------|
+| `lex` | Amazon Lex bot | `bot_id`, `bot_alias_id` |
+| `bedrock` | Guardrails and safety filters | `guardrail_id`, `guardrail_arn` |
+| `lambda` | Backend functions | `function_arns`, `function_names` |
+
+### Security Modules (FedRAMP)
+
+| Module | Description | Key Outputs |
+|--------|-------------|-------------|
+| `kms` | Encryption keys | `key_id`, `key_arn` |
+| `cloudtrail` | Audit logging | `trail_arn`, `log_group_arn` |
+| `vpc` | Network isolation | `vpc_id`, `subnet_ids` |
+| `waf` | Web application firewall | `web_acl_arn` |
+| `config-rules` | Compliance rules | `conformance_pack_arn` |
+| `backup` | Automated backups | `vault_arn`, `plan_id` |
+
+### Operational Modules
+
+| Module | Description | Key Outputs |
+|--------|-------------|-------------|
+| `dynamodb` | Survey data storage | `table_names`, `table_arns` |
+| `monitoring` | CloudWatch dashboards | `dashboard_url`, `alarm_arns` |
+| `validation` | Automated testing | `state_machine_arn`, `report_bucket` |
+| `iam` | Roles and policies | `role_arns` |
+
+---
+
+## 🏁 Quick Reference Commands
 
 ```bash
-terraform init      # Download required providers
-terraform plan      # Preview changes (safe, no modifications)
-terraform apply     # Deploy or update infrastructure
-terraform destroy   # Delete everything (careful!)
-terraform output    # Show created resource IDs
-```
+# Terraform
+terraform init          # Initialize
+terraform plan          # Preview
+terraform apply         # Deploy
+terraform destroy       # Teardown
+terraform output        # Show outputs
 
-### Key Files to Edit
+# Validation
+./scripts/validate.sh all        # Run all tests
+./scripts/validate.sh status     # Check status
+./scripts/validate.sh report     # Get report
 
-```
-terraform/terraform.tfvars   # Your configuration
-agent-prompt.md              # AI behavior
-survey-questions.json        # Question wording
-contact-flow.json            # Call routing
-```
+# Disaster Recovery
+./scripts/dr/validate-failover.sh    # Check DR readiness
+./scripts/dr/dr-controller.sh failover   # Execute failover
+./scripts/dr/failback.sh             # Return to primary
 
-### Key AWS Console Locations
-
-```
-Amazon Connect    → Your contact center dashboard
-CloudWatch Logs   → Error logs and debugging
-DynamoDB          → Survey response data
-CloudTrail        → Audit logs
-AWS Config        → Compliance status
+# AWS CLI
+aws connect describe-instance --instance-id {id}
+aws lexv2-models describe-bot --bot-id {id}
+aws logs tail /aws/lambda/{function}
 ```
 
 ---
@@ -571,6 +687,8 @@ This project is provided for demonstration and educational purposes for governme
 ## 🤝 Contributing
 
 Contributions welcome! Please submit issues and pull requests to help improve this Government CCaaS solution.
+
+**Repository:** https://github.com/636137/MarcS-CensusDemo
 
 ---
 

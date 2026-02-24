@@ -11,7 +11,7 @@
     "_docs": "Core agent settings: timeout, base instructions, and which AI model to use",
     "idleSessionTTLInSeconds": 300,
     "instruction": "You are a Census Enumerator AI assistant. Your goal is to collect accurate household census information while maintaining a friendly, professional demeanor. Always verify the address and resident status before proceeding. Collect information for each household member systematically. Emphasize confidentiality and the importance of census participation.",
-    "foundationModel": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "foundationModel": "anthropic.claude-sonnet-4-5-20250929-v1:0",
     "promptOverrideConfiguration": {
       "overrideLambda": null,
       "promptConfigurations": []
