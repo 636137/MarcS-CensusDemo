@@ -12,9 +12,10 @@ This document outlines critical service quotas, limits, and "gotchas" for deploy
 2. [Amazon Connect Specific Limits](#amazon-connect-specific-limits)
 3. [Single Government Entity Deployment](#single-government-entity-deployment)
 4. [Multi-Tenant Deployment](#multi-tenant-deployment-multiple-government-entities)
-5. [Critical Gotchas](#critical-gotchas)
-6. [Quota Increase Request Process](#quota-increase-request-process)
-7. [Monitoring Quota Usage](#monitoring-quota-usage)
+5. [Multi-Tenant Resource Tagging Strategy](#multi-tenant-resource-tagging-strategy)
+6. [Critical Gotchas](#critical-gotchas)
+7. [Quota Increase Request Process](#quota-increase-request-process)
+8. [Monitoring Quota Usage](#monitoring-quota-usage)
 
 ---
 
@@ -427,6 +428,472 @@ resource "aws_connect_queue" "tenant_queues" {
     Tenant = each.value.tenant_key
   }
 }
+```
+
+---
+
+## Multi-Tenant Resource Tagging Strategy
+
+Proper tagging is **essential** for multi-tenant Government CCaaS deployments. Tags enable cost allocation, access control, compliance reporting, and operational automation.
+
+### Mandatory Tag Schema
+
+Every resource MUST have these tags:
+
+| Tag Key | Description | Example Values | Used For |
+|---------|-------------|----------------|----------|
+| `Tenant` | Primary tenant/agency identifier | `agency-census`, `agency-ssa`, `agency-va` | Cost allocation, access control |
+| `Environment` | Deployment environment | `production`, `staging`, `development` | Environment separation |
+| `Project` | Project/program name | `ccaas-gov`, `census-2030`, `va-helpdesk` | Cost tracking |
+| `CostCenter` | Financial cost center | `CC-12345`, `CENSUS-OPS-001` | Chargeback, billing |
+| `DataClassification` | Data sensitivity level | `public`, `pii`, `phi`, `fedramp-high` | Compliance, security |
+| `Owner` | Team or individual owner | `census-tech-team`, `john.smith@agency.gov` | Accountability |
+| `ManagedBy` | How resource is managed | `terraform`, `console`, `cloudformation` | Automation tracking |
+| `CreatedDate` | Resource creation date | `2026-02-08` | Lifecycle management |
+
+### AWS Cost Allocation Tags
+
+Enable these tags as **Cost Allocation Tags** in AWS Billing:
+
+```bash
+# Enable cost allocation tags via CLI
+aws ce update-cost-allocation-tags-status \
+  --cost-allocation-tags-status TagKey=Tenant,Status=Active \
+                                TagKey=CostCenter,Status=Active \
+                                TagKey=Environment,Status=Active \
+                                TagKey=Project,Status=Active
+```
+
+> **Note:** Cost allocation tags take 24 hours to appear in Cost Explorer after activation.
+
+### Terraform Tagging Implementation
+
+#### Default Tags Provider Configuration
+
+```hcl
+# terraform/providers.tf
+provider "aws" {
+  region = var.aws_region
+  
+  default_tags {
+    tags = {
+      Project          = "Government-CCaaS"
+      Environment      = var.environment
+      ManagedBy        = "terraform"
+      Repository       = "github.com/org/ccaas-gov"
+      DeploymentDate   = timestamp()
+    }
+  }
+}
+```
+
+#### Tenant-Specific Tag Module
+
+```hcl
+# terraform/modules/tagging/main.tf
+
+variable "tenant_id" {
+  description = "Tenant identifier"
+  type        = string
+}
+
+variable "tenant_name" {
+  description = "Human-readable tenant name"
+  type        = string
+}
+
+variable "cost_center" {
+  description = "Financial cost center for billing"
+  type        = string
+}
+
+variable "data_classification" {
+  description = "Data sensitivity classification"
+  type        = string
+  default     = "pii"
+  validation {
+    condition     = contains(["public", "pii", "phi", "fedramp-high"], var.data_classification)
+    error_message = "Must be: public, pii, phi, or fedramp-high"
+  }
+}
+
+variable "owner" {
+  description = "Team or individual owner"
+  type        = string
+}
+
+locals {
+  common_tags = {
+    Tenant             = var.tenant_id
+    TenantName         = var.tenant_name
+    CostCenter         = var.cost_center
+    DataClassification = var.data_classification
+    Owner              = var.owner
+    CreatedDate        = formatdate("YYYY-MM-DD", timestamp())
+  }
+}
+
+output "tags" {
+  value = local.common_tags
+}
+```
+
+#### Using Tags Across Resources
+
+```hcl
+# terraform/main.tf
+
+module "tenant_tags" {
+  source = "./modules/tagging"
+  
+  tenant_id           = "agency-census"
+  tenant_name         = "U.S. Census Bureau"
+  cost_center         = "CENSUS-CC-2030"
+  data_classification = "pii"
+  owner               = "census-contact-center-team"
+}
+
+# Apply to Connect resources
+resource "aws_connect_queue" "survey_queue" {
+  name        = "CENSUS-Survey-Queue"
+  instance_id = aws_connect_instance.main.id
+  
+  tags = merge(module.tenant_tags.tags, {
+    ResourceType = "connect-queue"
+    QueueType    = "survey"
+  })
+}
+
+# Apply to Lambda functions
+resource "aws_lambda_function" "survey_handler" {
+  function_name = "census-survey-handler"
+  # ... other config
+  
+  tags = merge(module.tenant_tags.tags, {
+    ResourceType = "lambda"
+    Purpose      = "survey-response-handler"
+  })
+}
+
+# Apply to DynamoDB tables
+resource "aws_dynamodb_table" "survey_responses" {
+  name = "census-survey-responses"
+  # ... other config
+  
+  tags = merge(module.tenant_tags.tags, {
+    ResourceType = "dynamodb"
+    TableType    = "survey-data"
+  })
+}
+
+# Apply to S3 buckets
+resource "aws_s3_bucket" "recordings" {
+  bucket = "gov-ccaas-census-recordings"
+  
+  tags = merge(module.tenant_tags.tags, {
+    ResourceType = "s3"
+    BucketType   = "call-recordings"
+  })
+}
+```
+
+### Tag-Based Access Control (ABAC)
+
+Use tags for fine-grained access control:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowTenantResourceAccess",
+      "Effect": "Allow",
+      "Action": [
+        "connect:Describe*",
+        "connect:List*",
+        "connect:Get*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Tenant": "${aws:PrincipalTag/Tenant}"
+        }
+      }
+    },
+    {
+      "Sid": "AllowDynamoDBTenantAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Tenant": "${aws:PrincipalTag/Tenant}"
+        }
+      }
+    },
+    {
+      "Sid": "AllowS3TenantBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::gov-ccaas-*-recordings",
+        "arn:aws:s3:::gov-ccaas-*-recordings/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Tenant": "${aws:PrincipalTag/Tenant}"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Tag-Based Resource Groups
+
+Organize resources by tenant using AWS Resource Groups:
+
+```hcl
+# terraform/modules/tenant/resource_group.tf
+
+resource "aws_resourcegroups_group" "tenant" {
+  name        = "tenant-${var.tenant_id}-resources"
+  description = "All resources for tenant ${var.tenant_name}"
+
+  resource_query {
+    query = jsonencode({
+      ResourceTypeFilters = ["AWS::AllSupported"]
+      TagFilters = [
+        {
+          Key    = "Tenant"
+          Values = [var.tenant_id]
+        }
+      ]
+    })
+  }
+
+  tags = {
+    Tenant      = var.tenant_id
+    Purpose     = "resource-organization"
+    ManagedBy   = "terraform"
+  }
+}
+```
+
+### AWS Organizations Tag Policies
+
+Enforce tagging compliance across accounts:
+
+```json
+{
+  "tags": {
+    "Tenant": {
+      "tag_key": {
+        "@@assign": "Tenant"
+      },
+      "enforced_for": {
+        "@@assign": [
+          "connect:instance",
+          "connect:queue",
+          "lambda:function",
+          "dynamodb:table",
+          "s3:bucket",
+          "kms:key"
+        ]
+      }
+    },
+    "DataClassification": {
+      "tag_key": {
+        "@@assign": "DataClassification"
+      },
+      "tag_value": {
+        "@@assign": ["public", "pii", "phi", "fedramp-high"]
+      },
+      "enforced_for": {
+        "@@assign": [
+          "dynamodb:table",
+          "s3:bucket",
+          "lambda:function"
+        ]
+      }
+    },
+    "CostCenter": {
+      "tag_key": {
+        "@@assign": "CostCenter"
+      },
+      "enforced_for": {
+        "@@assign": [
+          "connect:instance",
+          "lambda:function",
+          "dynamodb:table",
+          "s3:bucket"
+        ]
+      }
+    }
+  }
+}
+```
+
+### Tagging Automation Scripts
+
+#### Audit Untagged Resources
+
+```bash
+#!/bin/bash
+# scripts/audit-tags.sh
+
+echo "=== Untagged or Non-Compliant Resources ==="
+
+# Check Lambda functions
+echo -e "\n--- Lambda Functions Missing Tenant Tag ---"
+aws lambda list-functions --query 'Functions[?!Tags.Tenant].FunctionName' --output table
+
+# Check DynamoDB tables
+echo -e "\n--- DynamoDB Tables Missing Tenant Tag ---"
+for table in $(aws dynamodb list-tables --query 'TableNames[]' --output text); do
+  tags=$(aws dynamodb list-tags-of-resource \
+    --resource-arn "arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/${table}" \
+    --query "Tags[?Key=='Tenant'].Value" --output text)
+  if [ -z "$tags" ]; then
+    echo "  - $table"
+  fi
+done
+
+# Check S3 buckets
+echo -e "\n--- S3 Buckets Missing Tenant Tag ---"
+for bucket in $(aws s3api list-buckets --query 'Buckets[].Name' --output text); do
+  tags=$(aws s3api get-bucket-tagging --bucket "$bucket" 2>/dev/null | \
+    jq -r '.TagSet[] | select(.Key=="Tenant") | .Value')
+  if [ -z "$tags" ]; then
+    echo "  - $bucket"
+  fi
+done
+
+# Check Connect queues
+echo -e "\n--- Connect Queues Missing Tenant Tag ---"
+for instance in $(aws connect list-instances --query 'InstanceSummaryList[].Id' --output text); do
+  for queue in $(aws connect list-queues --instance-id "$instance" \
+    --query 'QueueSummaryList[].Id' --output text); do
+    tags=$(aws connect list-tags-for-resource \
+      --resource-arn "arn:aws:connect:${AWS_REGION}:${AWS_ACCOUNT_ID}:instance/${instance}/queue/${queue}" \
+      --query "tags.Tenant" --output text)
+    if [ "$tags" == "None" ] || [ -z "$tags" ]; then
+      echo "  - Instance: $instance, Queue: $queue"
+    fi
+  done
+done
+```
+
+#### Auto-Tag Non-Compliant Resources
+
+```bash
+#!/bin/bash
+# scripts/auto-tag.sh - Add missing mandatory tags
+
+TENANT="${1:-unknown}"
+COST_CENTER="${2:-UNASSIGNED}"
+OWNER="${3:-platform-team}"
+
+echo "=== Auto-tagging untagged resources ==="
+echo "Tenant: $TENANT"
+echo "CostCenter: $COST_CENTER"
+echo "Owner: $OWNER"
+
+# Tag Lambda functions
+for func in $(aws lambda list-functions --query 'Functions[?!Tags.Tenant].FunctionArn' --output text); do
+  echo "Tagging Lambda: $func"
+  aws lambda tag-resource --resource "$func" \
+    --tags "Tenant=$TENANT,CostCenter=$COST_CENTER,Owner=$OWNER,DataClassification=pii"
+done
+
+# Tag DynamoDB tables
+for table in $(aws dynamodb list-tables --query 'TableNames[]' --output text); do
+  arn="arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/${table}"
+  existing=$(aws dynamodb list-tags-of-resource --resource-arn "$arn" \
+    --query "Tags[?Key=='Tenant'].Value" --output text)
+  if [ -z "$existing" ]; then
+    echo "Tagging DynamoDB: $table"
+    aws dynamodb tag-resource --resource-arn "$arn" \
+      --tags Key=Tenant,Value=$TENANT \
+             Key=CostCenter,Value=$COST_CENTER \
+             Key=Owner,Value=$OWNER \
+             Key=DataClassification,Value=pii
+  fi
+done
+```
+
+### Cost Allocation Reporting
+
+Generate per-tenant cost reports:
+
+```bash
+#!/bin/bash
+# scripts/tenant-cost-report.sh
+
+START_DATE="${1:-$(date -v-30d +%Y-%m-%d)}"
+END_DATE="${2:-$(date +%Y-%m-%d)}"
+
+echo "=== Tenant Cost Report ($START_DATE to $END_DATE) ==="
+
+# Get costs grouped by Tenant tag
+aws ce get-cost-and-usage \
+  --time-period Start=$START_DATE,End=$END_DATE \
+  --granularity MONTHLY \
+  --metrics "BlendedCost" "UnblendedCost" "UsageQuantity" \
+  --group-by Type=TAG,Key=Tenant \
+  --query 'ResultsByTime[].Groups[].{Tenant: Keys[0], Cost: Metrics.BlendedCost.Amount}' \
+  --output table
+
+echo -e "\n=== Service Breakdown by Tenant ==="
+
+for tenant in agency-census agency-ssa agency-va; do
+  echo -e "\n--- $tenant ---"
+  aws ce get-cost-and-usage \
+    --time-period Start=$START_DATE,End=$END_DATE \
+    --granularity MONTHLY \
+    --metrics "BlendedCost" \
+    --filter "{\"Tags\": {\"Key\": \"Tenant\", \"Values\": [\"$tenant\"]}}" \
+    --group-by Type=DIMENSION,Key=SERVICE \
+    --query 'ResultsByTime[].Groups[].{Service: Keys[0], Cost: Metrics.BlendedCost.Amount}' \
+    --output table
+done
+```
+
+### Tagging Best Practices Summary
+
+| Best Practice | Description |
+|---------------|-------------|
+| **Tag Early** | Apply tags at resource creation, not after |
+| **Automate** | Use Terraform default_tags and modules |
+| **Enforce** | Use AWS Organizations tag policies |
+| **Audit** | Run weekly compliance checks |
+| **Document** | Maintain tag schema documentation |
+| **Standardize** | Use consistent naming (lowercase, hyphens) |
+| **Cost Tags** | Activate cost allocation tags in Billing |
+| **ABAC** | Use tags for access control policies |
+| **Groups** | Create Resource Groups per tenant |
+| **Review** | Monthly tag policy compliance review |
+
+### Tag Values Standardization
+
+```
+# Recommended tag value formats:
+
+Tenant:             lowercase, hyphenated (agency-census, agency-ssa)
+Environment:        lowercase (production, staging, development, dr)
+CostCenter:         uppercase with hyphens (CC-12345, CENSUS-OPS-001)
+DataClassification: lowercase (public, pii, phi, fedramp-high)
+Owner:              lowercase, hyphenated (census-tech-team)
+ManagedBy:          lowercase (terraform, console, cloudformation)
+CreatedDate:        ISO format (2026-02-08)
 ```
 
 ---

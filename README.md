@@ -113,7 +113,10 @@ Government-CCaaS-in-a-Box/
 ├── 📄 README.md                         ◄── You are here
 ├── 📄 DEPLOYMENT_GUIDE.md               ◄── Step-by-step setup instructions
 ├── 📄 FEDRAMP_COMPLIANCE.md             ◄── Security controls documentation
+├── 📄 SERVICE_QUOTAS_AND_LIMITS.md      ◄── AWS quotas, multi-tenant sizing, gotchas
+├── 📄 DISASTER_RECOVERY.md              ◄── DR procedures and failover runbook
 ├── 📄 AGENT_OPTIONS_COMPARISON.md       ◄── Bedrock vs Connect AI comparison
+├── 📄 WELL_ARCHITECTED_LENS.json        ◄── AWS Well-Architected custom lens
 │
 ├── 🤖 AI AGENT CONFIGURATION
 │   ├── agent-prompt.md                  ◄── AI personality & conversation rules
@@ -498,7 +501,31 @@ A: AWS offers paid support plans. System integrators can also help deploy and cu
 |----------|-------------|
 | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Detailed step-by-step deployment instructions |
 | [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md) | Complete FedRAMP control mapping and compliance guide |
+| [SERVICE_QUOTAS_AND_LIMITS.md](SERVICE_QUOTAS_AND_LIMITS.md) | AWS quotas, multi-tenant architecture, and gotchas |
+| [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | DR procedures, failover scripts, and runbooks |
 | [AGENT_OPTIONS_COMPARISON.md](AGENT_OPTIONS_COMPARISON.md) | Bedrock Agent vs Connect Native AI comparison |
+| [WELL_ARCHITECTED_LENS.json](WELL_ARCHITECTED_LENS.json) | Custom Well-Architected lens for AWS Console import |
+
+### Importing the Well-Architected Custom Lens
+
+To validate your deployment against Government CCaaS best practices:
+
+```bash
+# Import the custom lens into AWS Well-Architected Tool
+aws wellarchitected import-lens \
+  --json-string file://WELL_ARCHITECTED_LENS.json \
+  --lens-alias "government-ccaas" \
+  --region us-east-1
+
+# List your custom lenses to verify
+aws wellarchitected list-lenses --lens-type CUSTOM_SELF
+```
+
+Or import via AWS Console:
+1. Go to **AWS Well-Architected Tool** → **Custom lenses**
+2. Click **Create custom lens**
+3. Upload `WELL_ARCHITECTED_LENS.json`
+4. Create a new workload and select the lens for review
 
 ---
 
