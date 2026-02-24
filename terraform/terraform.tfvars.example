@@ -44,3 +44,65 @@ kms_key_arn           = ""  # Leave empty to create new KMS key
 vpc_id                 = ""
 vpc_subnet_ids         = []
 vpc_security_group_ids = []
+# =============================================================================
+# FEDRAMP COMPLIANCE - Government CCaaS in a Box
+# =============================================================================
+# Set enable_fedramp_compliance = true to deploy all FedRAMP controls
+# This creates: KMS keys, CloudTrail, VPC, WAF, Config Rules, Backup
+
+enable_fedramp_compliance = true
+
+# Security Contact (receives all security alerts)
+security_contact_email = "security@agency.gov"
+
+# KMS Key Administrators (IAM ARNs allowed to manage encryption keys)
+kms_key_administrators = [
+  # "arn:aws:iam::ACCOUNT_ID:role/SecurityAdmin"
+]
+
+# Audit Log Retention (minimum 90 days for FedRAMP)
+audit_log_retention_days = 365
+
+# VPC Configuration (required when deploy_in_vpc = true)
+deploy_in_vpc              = true
+vpc_cidr                   = "10.0.0.0/16"
+availability_zones         = ["us-east-1a", "us-east-1b", "us-east-1c"]
+enable_nat_gateway         = true
+single_nat_gateway         = false  # true for cost savings, false for HA
+enable_vpc_endpoints       = true   # PrivateLink endpoints for AWS services
+
+# WAF Configuration
+enable_waf            = true
+waf_rate_limit        = 2000   # Requests per 5 minutes per IP
+waf_geo_restriction   = true   # Restrict to US only
+waf_allowed_countries = ["US"]
+
+# Backup/Disaster Recovery Configuration
+enable_backup              = true
+enable_cross_region_backup = false  # Set to true and provide dr_vault_arn
+dr_vault_arn               = ""     # ARN of backup vault in DR region (create separately)
+backup_admin_role_arns     = [
+  # "arn:aws:iam::ACCOUNT_ID:role/BackupAdmin"
+]
+
+# SNS Topics for Security Notifications
+security_notification_arns = []  # Add SNS topic ARNs for security alerts
+
+# =============================================================================
+# AMAZON CONNECT INSTANCE (NEW)
+# =============================================================================
+# Set create_connect_instance = true to create a new Connect instance
+# Set to false to use existing instance (specify connect_instance_id above)
+
+create_connect_instance = true
+connect_instance_alias  = "census-enumerator"  # Must be globally unique
+
+# Test Users
+agent_emails = [
+  "census.agent1@example.com",
+  "census.agent2@example.com",
+  "census.agent3@example.com",
+  "census.agent4@example.com",
+  "census.agent5@example.com"
+]
+supervisor_email = "census.supervisor@example.com"

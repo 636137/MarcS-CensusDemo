@@ -192,3 +192,128 @@ variable "vpc_security_group_ids" {
   type        = list(string)
   default     = []
 }
+# =============================================================================
+# FedRAMP Compliance Configuration
+# =============================================================================
+
+variable "enable_fedramp_compliance" {
+  description = "Enable FedRAMP compliance modules (KMS, CloudTrail, VPC, WAF, Config, Backup)"
+  type        = bool
+  default     = true
+}
+
+variable "deploy_in_vpc" {
+  description = "Deploy Lambda functions and resources in VPC for network isolation"
+  type        = bool
+  default     = true
+}
+
+variable "kms_key_administrators" {
+  description = "List of IAM ARNs allowed to administer KMS keys"
+  type        = list(string)
+  default     = []
+}
+
+variable "audit_log_retention_days" {
+  description = "Retention period for audit logs in days (FedRAMP minimum: 90)"
+  type        = number
+  default     = 365
+
+  validation {
+    condition     = var.audit_log_retention_days >= 90
+    error_message = "FedRAMP requires minimum 90 days audit log retention."
+  }
+}
+
+variable "security_notification_arns" {
+  description = "List of SNS topic ARNs for security notifications"
+  type        = list(string)
+  default     = []
+}
+
+variable "security_contact_email" {
+  description = "Email address for security alerts (FedRAMP IR-4)"
+  type        = string
+  default     = ""
+}
+
+# VPC Configuration
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  description = "List of availability zones to use"
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway for outbound internet access from private subnets"
+  type        = bool
+  default     = true
+}
+
+variable "single_nat_gateway" {
+  description = "Use single NAT Gateway (cost savings) vs one per AZ (high availability)"
+  type        = bool
+  default     = false
+}
+
+variable "enable_vpc_endpoints" {
+  description = "Enable VPC interface endpoints (PrivateLink) for AWS services"
+  type        = bool
+  default     = true
+}
+
+# WAF Configuration
+variable "enable_waf" {
+  description = "Enable WAF web application firewall"
+  type        = bool
+  default     = true
+}
+
+variable "waf_rate_limit" {
+  description = "WAF rate limit threshold (requests per 5 minutes per IP)"
+  type        = number
+  default     = 2000
+}
+
+variable "waf_geo_restriction" {
+  description = "Enable geographic restriction (US-only)"
+  type        = bool
+  default     = true
+}
+
+variable "waf_allowed_countries" {
+  description = "List of allowed country codes when geo restriction is enabled"
+  type        = list(string)
+  default     = ["US"]
+}
+
+# Backup/DR Configuration
+variable "enable_backup" {
+  description = "Enable AWS Backup for disaster recovery"
+  type        = bool
+  default     = true
+}
+
+variable "enable_cross_region_backup" {
+  description = "Enable cross-region backup copy for disaster recovery"
+  type        = bool
+  default     = false
+}
+
+variable "dr_vault_arn" {
+  description = "ARN of backup vault in DR region (create separately if needed)"
+  type        = string
+  default     = ""
+}
+
+variable "backup_admin_role_arns" {
+  description = "IAM role ARNs allowed to manage backup vault"
+  type        = list(string)
+  default     = []
+}
