@@ -94,16 +94,52 @@ variable "dynamodb_enable_point_in_time_recovery" {
 }
 
 # Amazon Connect Configuration
+variable "create_connect_instance" {
+  description = "Whether to create a new Amazon Connect instance (set to false to use existing)"
+  type        = bool
+  default     = true
+}
+
 variable "connect_instance_id" {
-  description = "Existing Amazon Connect instance ID (leave empty to skip Connect integration)"
+  description = "Existing Amazon Connect instance ID (required if create_connect_instance is false)"
   type        = string
   default     = ""
+}
+
+variable "connect_instance_alias" {
+  description = "Unique alias for the Amazon Connect instance (lowercase, alphanumeric, hyphens only)"
+  type        = string
+  default     = "census-enumerator"
+  
+  validation {
+    condition     = can(regex("^[a-z0-9][a-z0-9-]*[a-z0-9]$", var.connect_instance_alias))
+    error_message = "Instance alias must be lowercase alphanumeric with hyphens, cannot start/end with hyphen."
+  }
 }
 
 variable "connect_contact_flow_name" {
   description = "Name for the Census Enumerator contact flow"
   type        = string
   default     = "CensusEnumeratorFlow"
+}
+
+# Connect Users Configuration
+variable "agent_emails" {
+  description = "List of email addresses for test agent users"
+  type        = list(string)
+  default     = [
+    "census.agent1@example.com",
+    "census.agent2@example.com",
+    "census.agent3@example.com",
+    "census.agent4@example.com",
+    "census.agent5@example.com"
+  ]
+}
+
+variable "supervisor_email" {
+  description = "Email address for the supervisor user"
+  type        = string
+  default     = "census.supervisor@example.com"
 }
 
 # Monitoring Configuration

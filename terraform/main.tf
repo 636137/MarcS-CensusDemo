@@ -155,17 +155,74 @@ resource "aws_lambda_permission" "lex_invoke_fulfillment" {
   source_arn    = "${module.lex.bot_arn}/*"
 }
 
-# Amazon Connect Instance (optional - uncomment if creating new instance)
-# module "connect" {
-#   source = "./modules/connect"
-#
-#   name_prefix        = local.name_prefix
-#   environment        = var.environment
-#   lex_bot_alias_arn  = module.lex.bot_alias_arn
-#   lambda_arn         = module.lambda.backend_lambda_arn
-#   
-#   tags = local.common_tags
-# }
+# =============================================================================
+# MODULE: Amazon Connect Instance
+# Creates the Connect instance with all required features enabled
+# =============================================================================
+module "connect" {
+  source = "./modules/connect"
+  count  = var.create_connect_instance ? 1 : 0
+
+  name_prefix    = local.name_prefix
+  name_suffix    = local.name_suffix
+  instance_alias = var.connect_instance_alias
+  account_id     = data.aws_caller_identity.current.account_id
+  
+  tags = local.common_tags
+}
+
+# =============================================================================
+# MODULE: Connect Queues and Routing Profiles
+# Creates realistic queues for Census survey operations
+# =============================================================================
+module "connect_queues" {
+  source = "./modules/connect-queues"
+  count  = var.create_connect_instance ? 1 : 0
+
+  instance_id          = module.connect[0].instance_id
+  census_hours_id      = module.connect[0].census_hours_of_operation_id
+  always_open_hours_id = module.connect[0].always_open_hours_of_operation_id
+  
+  tags = local.common_tags
+
+  depends_on = [module.connect]
+}
+
+# =============================================================================
+# MODULE: Connect Users
+# Creates test agents, supervisors, and security profiles
+# =============================================================================
+module "connect_users" {
+  source = "./modules/connect-users"
+  count  = var.create_connect_instance ? 1 : 0
+
+  instance_id                  = module.connect[0].instance_id
+  agent_routing_profile_id     = module.connect_queues[0].routing_profile_ids["Census-General-Agent"]
+  supervisor_routing_profile_id = module.connect_queues[0].routing_profile_ids["Census-Supervisor"]
+  agent_emails                 = var.agent_emails
+  supervisor_email             = var.supervisor_email
+  
+  tags = local.common_tags
+
+  depends_on = [module.connect_queues]
+}
+
+# =============================================================================
+# MODULE: Contact Lens Rules
+# Real-time and post-contact analytics rules for quality management
+# =============================================================================
+module "contact_lens" {
+  source = "./modules/contact-lens"
+  count  = var.create_connect_instance ? 1 : 0
+
+  instance_id           = module.connect[0].instance_id
+  supervisor_user_ids   = [module.connect_users[0].supervisor_user_id]
+  notification_email    = var.supervisor_email
+  
+  tags = local.common_tags
+
+  depends_on = [module.connect_users]
+}
 
 # Bedrock Guardrail
 module "bedrock" {

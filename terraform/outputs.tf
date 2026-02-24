@@ -91,3 +91,78 @@ output "connect_integration_instructions" {
     4. Configure chat widget with your instance ID
   EOT
 }
+# =============================================================================
+# Amazon Connect Instance Outputs (when create_connect_instance = true)
+# =============================================================================
+
+output "connect_instance_id" {
+  description = "Amazon Connect instance ID"
+  value       = var.create_connect_instance ? module.connect[0].instance_id : var.connect_instance_id
+}
+
+output "connect_instance_arn" {
+  description = "Amazon Connect instance ARN"
+  value       = var.create_connect_instance ? module.connect[0].instance_arn : null
+}
+
+output "connect_access_url" {
+  description = "URL to access the Amazon Connect CCP"
+  value       = var.create_connect_instance ? module.connect[0].access_url : null
+}
+
+output "connect_storage_bucket" {
+  description = "S3 bucket for Connect recordings and transcripts"
+  value       = var.create_connect_instance ? module.connect[0].storage_bucket_name : null
+}
+
+# =============================================================================
+# Amazon Connect Queues and Routing Outputs
+# =============================================================================
+
+output "connect_queue_ids" {
+  description = "Map of queue names to queue IDs"
+  value       = var.create_connect_instance ? module.connect_queues[0].queue_ids : {}
+}
+
+output "connect_routing_profile_ids" {
+  description = "Map of routing profile names to IDs"
+  value       = var.create_connect_instance ? module.connect_queues[0].routing_profile_ids : {}
+}
+
+# =============================================================================
+# Amazon Connect Users Outputs
+# =============================================================================
+
+output "connect_agent_user_ids" {
+  description = "Map of agent emails to user IDs"
+  value       = var.create_connect_instance ? module.connect_users[0].agent_user_ids : {}
+}
+
+output "connect_supervisor_user_id" {
+  description = "Supervisor user ID"
+  value       = var.create_connect_instance ? module.connect_users[0].supervisor_user_id : null
+}
+
+output "connect_security_profile_ids" {
+  description = "Map of security profile names to IDs"
+  value       = var.create_connect_instance ? module.connect_users[0].security_profile_ids : {}
+}
+
+# =============================================================================
+# Contact Lens Outputs
+# =============================================================================
+
+output "contact_lens_real_time_rule_ids" {
+  description = "IDs of real-time Contact Lens rules"
+  value       = var.create_connect_instance ? module.contact_lens[0].real_time_rule_ids : {}
+}
+
+output "contact_lens_post_call_rule_ids" {
+  description = "IDs of post-call Contact Lens rules"
+  value       = var.create_connect_instance ? module.contact_lens[0].post_call_rule_ids : {}
+}
+
+output "contact_lens_vocabulary_id" {
+  description = "Census custom vocabulary ID for speech recognition"
+  value       = var.create_connect_instance ? module.contact_lens[0].vocabulary_id : null
+}
