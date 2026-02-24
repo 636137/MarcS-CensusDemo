@@ -678,9 +678,14 @@ aws logs tail /aws/lambda/{function}
 
 ---
 
-## 📄 License
+## � License
+Maximus Proprietary
 
-This project is provided for demonstration and educational purposes for government modernization initiatives.
+This software is proprietary to Maximus Federal Services, LLC. Unauthorized access, use, or distribution is prohibited.
+
+No License is Granted. This software is for authorized Maximus personnel only. Not for public use.
+
+© 2026 Maximus Federal Services, LLC. All rights reserved.
 
 ---
 
