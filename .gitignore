@@ -1,0 +1,26 @@
+# Terraform state and secrets
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/.terraform.lock.hcl
+
+# Lambda dependencies and packages
+lambda/node_modules/
+lex-bot/lambda/node_modules/
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+crash.log
+crash.*.log
