@@ -1,0 +1,102 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "SetRecording",
+  "Metadata": {
+    "entryPointPosition": {"x": 20, "y": 20},
+    "snapToGrid": false
+  },
+  "Actions": [
+    {
+      "Identifier": "SetRecording",
+      "Type": "UpdateContactRecordingBehavior",
+      "Parameters": {
+        "RecordingBehaviorOption": "Enable"
+      },
+      "Transitions": {
+        "NextAction": "Greeting"
+      }
+    },
+    {
+      "Identifier": "Greeting",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for calling the U.S. Census Bureau. I'm your AI assistant and I'll help you complete your census survey today."
+      },
+      "Transitions": {
+        "NextAction": "GetInput"
+      }
+    },
+    {
+      "Identifier": "GetInput",
+      "Type": "GetParticipantInput",
+      "Parameters": {
+        "Text": "To get started, please say or enter your 10-digit phone number.",
+        "DTMF": {
+          "MaxDigits": 10,
+          "Timeout": 10
+        }
+      },
+      "Transitions": {
+        "NextAction": "InvokeLambda",
+        "Errors": [
+          {"NextAction": "TransferToAgent", "ErrorType": "NoMatchingError"}
+        ]
+      }
+    },
+    {
+      "Identifier": "InvokeLambda",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusAgentActions",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "phoneNumber": "$.StoredCustomerInput",
+          "action": "verifyAddress"
+        }
+      },
+      "Transitions": {
+        "NextAction": "ConfirmAddress",
+        "Errors": [
+          {"NextAction": "TransferToAgent", "ErrorType": "NoMatchingError"}
+        ]
+      }
+    },
+    {
+      "Identifier": "ConfirmAddress",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "I found your address on file. Let me transfer you to an agent to complete your survey."
+      },
+      "Transitions": {
+        "NextAction": "TransferToAgent"
+      }
+    },
+    {
+      "Identifier": "TransferToAgent",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/f730136d-1810-4f3f-9ee0-bd75d9453b09"
+      },
+      "Transitions": {
+        "NextAction": "Transfer",
+        "Errors": [{"NextAction": "Disconnect", "ErrorType": "NoMatchingError"}]
+      }
+    },
+    {
+      "Identifier": "Transfer",
+      "Type": "TransferParticipantToQueue",
+      "Parameters": {},
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Errors": [
+          {"NextAction": "Disconnect", "ErrorType": "QueueAtCapacity"}
+        ]
+      }
+    },
+    {
+      "Identifier": "Disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {}
+    }
+  ]
+}

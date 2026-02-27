@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Amazon Q and Bedrock Agent Integration for Census Connect'
+
+Parameters:
+  ConnectInstanceId:
+    Type: String
+    Description: Amazon Connect Instance ID
+    Default: '1d3555df-0f7a-4c78-9177-d42253597de2'
+  
+  BedrockAgentId:
+    Type: String
+    Description: Bedrock Agent ID
+    Default: '5KNBMLPHSV'
+
+Resources:
+  # Enable Amazon Q via Lambda custom resource
+  EnableAmazonQFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: EnableAmazonQForConnect
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt EnableAmazonQRole.Arn
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          
+          connect = boto3.client('connect')
+          
+          def lambda_handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+                  
+                  instance_id = event['ResourceProperties']['InstanceId']
+                  agent_id = event['ResourceProperties']['AgentId']
+                  
+                  # Note: Amazon Q enablement via API is not directly supported
+                  # This would need to be done via console
+                  # But we can create the integration association
+                  
+                  try:
+                      # Create integration with Bedrock Agent
+                      response = connect.create_integration_association(
+                          InstanceId=instance_id,
+                          IntegrationType='WISDOM_ASSISTANT',
+                          IntegrationArn=f'arn:aws:bedrock:us-east-1:593804350786:agent/{agent_id}'
+                      )
+                      
+                      integration_id = response['IntegrationAssociationId']
+                      
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, 
+                                     {'IntegrationId': integration_id},
+                                     integration_id)
+                  except Exception as e:
+                      # If integration already exists or Q not enabled, return success
+                      # with message
+                      print(f"Integration note: {str(e)}")
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS,
+                                     {'Message': 'Amazon Q must be enabled via console first'})
+                      
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, 
+                                 {'Error': str(e)})
+  
+  EnableAmazonQRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ConnectIntegrationPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - connect:CreateIntegrationAssociation
+                  - connect:DeleteIntegrationAssociation
+                  - connect:ListIntegrationAssociations
+                  - connect:DescribeInstance
+                Resource: '*'
+  
+  AmazonQIntegration:
+    Type: Custom::AmazonQIntegration
+    Properties:
+      ServiceToken: !GetAtt EnableAmazonQFunction.Arn
+      InstanceId: !Ref ConnectInstanceId
+      AgentId: !Ref BedrockAgentId
+
+Outputs:
+  IntegrationStatus:
+    Description: Amazon Q Integration Status
+    Value: !GetAtt AmazonQIntegration.Message
+  
+  Instructions:
+    Description: Manual steps required
+    Value: 'Enable Amazon Q in Connect console, then update this stack to create integration'
