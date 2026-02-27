@@ -158,10 +158,16 @@
                     <li>Instant confirmation number</li>
                 </ul>
             </div>
+            <div style="margin-bottom:20px;padding:15px;background:#f3f4f6;border-radius:8px;">
+                <label style="display:block;margin-bottom:10px;font-weight:600;color:#1e3a8a;" for="engine-select">AI Engine:</label>
+                <select id="engine-select" style="width:100%;padding:10px;border:2px solid #3b82f6;border-radius:6px;font-size:14px;">
+                    <option value="bedrock">Bedrock Agent (Legacy)</option>
+                    <option value="strands">Strands AgentCore (New)</option>
+                </select>
+            </div>
             <button class="chat-button" onclick="startChat()">
                 💬 Start Survey Chat
             </button>
-        </div>
         <div class="footer">
             Powered by Amazon Connect &amp; AWS Bedrock AI
         </div>
@@ -169,7 +175,10 @@
 
     <div id="chat-widget">
         <div class="chat-header">
-            <h3>Census Survey Assistant</h3>
+            <div>
+                <h3>Census Survey Assistant</h3>
+                <span id="engine-badge" style="font-size:11px;background:#10b981;padding:4px 8px;border-radius:4px;margin-left:10px;">Bedrock Agent</span>
+            </div>
             <button class="close-btn" onclick="closeChat()">×</button>
         </div>
         <div class="chat-messages" id="messages"></div>
@@ -182,10 +191,17 @@
     </div>
 
     <script>
-        const API_URL = 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/chat';
+        const ENDPOINTS = {
+            bedrock: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/chat',
+            strands: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/strands'
+        };
         let sessionId = 'web-' + Date.now();
+        let apiUrl = ENDPOINTS.bedrock;
 
         function startChat() {
+            const engine = document.getElementById('engine-select').value;
+            apiUrl = ENDPOINTS[engine];
+            document.getElementById('engine-badge').textContent = engine === 'strands' ? 'Strands AgentCore' : 'Bedrock Agent';
             document.getElementById('chat-widget').classList.add('active');
         }
 
@@ -227,10 +243,10 @@
             showTyping();
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, inputText: message })
+                    body: JSON.stringify({ sessionId, inputText: message, useAgent: true })
                 });
                 const data = await response.json();
                 hideTyping();
