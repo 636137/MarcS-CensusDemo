@@ -412,16 +412,8 @@
     <!-- RIGHT: CHAT PANEL -->
     <div class="chat-panel">
         <div class="chat-panel-header">
-            <h3>Census Survey Assistant <span class="engine-badge" id="engine-badge" style="display:none"></span></h3>
+            <h3>Census Survey Assistant</h3>
             <p>AI-powered — available 24/7</p>
-        </div>
-
-        <div class="engine-selector">
-            <label for="engine-select">AI Engine:</label>
-            <select id="engine-select">
-                <option value="bedrock">Bedrock Agent</option>
-                <option value="strands">Strands AgentCore</option>
-            </select>
         </div>
 
         <div class="chat-messages" id="messages"></div>
@@ -454,43 +446,64 @@
     </div>
 </footer>
 
+<script src="https://unpkg.com/amazon-connect-chatjs@1.5.0/dist/amazon-connect-chat.js"></script>
 <script>
-    const ENDPOINTS = {
-        bedrock: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/chat',
-        strands: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/strands'
-    };
-    let sessionId = 'web-' + Date.now();
-    let apiUrl = ENDPOINTS.bedrock;
+    const START_CHAT_URL = 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/start-chat';
+    let chatSession = null;
 
     async function startChat() {
-        const engine = document.getElementById('engine-select').value;
-        apiUrl = ENDPOINTS[engine];
-        sessionId = 'web-' + Date.now();
-
-        const badge = document.getElementById('engine-badge');
-        badge.textContent = engine === 'strands' ? 'Strands AgentCore' : 'Bedrock Agent';
-        badge.style.display = 'inline';
-
         document.getElementById('start-btn').classList.add('hidden');
         document.getElementById('engine-select').parentElement.style.display = 'none';
         document.getElementById('messages').classList.add('active');
         document.getElementById('input-area').classList.add('active');
-
         showTyping();
+
         try {
-            const res = await fetch(apiUrl, {
+            // 1. Start Connect chat contact — goes through the same contact flow as voice
+            const res = await fetch(START_CHAT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, inputText: '__greeting__', useAgent: true })
+                body: JSON.stringify({ displayName: 'Census Visitor' })
             });
-            const data = await res.json();
+            const { participantToken, contactId } = await res.json();
+
+            // 2. Create participant connection via ChatJS
+            connect.ChatSession.setGlobalConfig({ loggerConfig: { useDefaultLogger: false } });
+            chatSession = connect.ChatSession.create({
+                chatDetails: { participantToken },
+                type: connect.ChatSession.SessionTypes.CUSTOMER,
+                options: { region: 'us-east-1' }
+            });
+
+            await chatSession.connect();
+
+            // 3. Listen for incoming messages
+            chatSession.onMessage(({ data }) => {
+                if (data.ParticipantRole === 'SYSTEM' || data.ParticipantRole === 'AGENT' || data.ParticipantRole === 'BOT') {
+                    hideTyping();
+                    if (data.ContentType === 'text/plain' && data.Content) {
+                        addMessage('bot', data.Content);
+                    }
+                }
+            });
+
+            chatSession.onTyping(({ data }) => {
+                if (data.ParticipantRole !== 'CUSTOMER') showTyping();
+            });
+
+            chatSession.onConnectionBroken(() => {
+                hideTyping();
+                addMessage('bot', 'Connection lost. Please refresh to start a new session.');
+            });
+
             hideTyping();
-            addMessage('bot', data.response || 'Hello! How can I help you complete your survey today?');
+            document.getElementById('chat-input').focus();
+
         } catch (e) {
             hideTyping();
-            addMessage('bot', 'Hello! Welcome to the U.S. Census Bureau. Please provide your phone number to begin.');
+            addMessage('bot', 'Unable to connect. Please call +1-833-289-5330 or try again.');
+            console.error(e);
         }
-        document.getElementById('chat-input').focus();
     }
 
     function addMessage(type, text) {
@@ -503,13 +516,15 @@
     }
 
     function showTyping() {
-        const div = document.createElement('div');
-        div.className = 'typing';
-        div.id = 'typing-indicator';
-        div.textContent = 'Assistant is typing...';
-        const msgs = document.getElementById('messages');
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
+        if (!document.getElementById('typing-indicator')) {
+            const div = document.createElement('div');
+            div.className = 'typing';
+            div.id = 'typing-indicator';
+            div.textContent = 'Assistant is typing...';
+            const msgs = document.getElementById('messages');
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
     }
 
     function hideTyping() {
@@ -520,24 +535,17 @@
     async function sendMessage() {
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
-        if (!message) return;
+        if (!message || !chatSession) return;
 
         addMessage('user', message);
         input.value = '';
         showTyping();
 
         try {
-            const res = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, inputText: message, useAgent: true })
-            });
-            const data = await res.json();
-            hideTyping();
-            addMessage('bot', data.response || 'I\'m having trouble processing that. Please try again.');
+            await chatSession.sendMessage({ contentType: 'text/plain', message });
         } catch (e) {
             hideTyping();
-            addMessage('bot', 'Connection error. Please try calling +1-833-289-5330 or try again later.');
+            addMessage('bot', 'Failed to send. Please try again.');
         }
     }
 
