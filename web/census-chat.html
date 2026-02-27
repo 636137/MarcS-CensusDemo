@@ -3,281 +3,547 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>U.S. Census Bureau - Complete Your Survey</title>
+    <title>Complete Your Survey | U.S. Census Bureau</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            min-height: 100vh;
+            font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            color: #1b1b1b;
+            background: #fff;
+        }
+
+        /* ── GOV BANNER ── */
+        .gov-banner {
+            background: #f0f0f0;
+            padding: 6px 0;
+            font-size: 12px;
+        }
+        .gov-banner-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1b1b1b;
+        }
+        .gov-banner-inner img { height: 14px; }
+        .gov-banner-inner span { font-weight: 600; }
+
+        /* ── HEADER ── */
+        header {
+            background: #112e51;
+            padding: 0;
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+        .logo-seal {
+            width: 56px;
+            height: 56px;
+            background: #fff;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            font-size: 28px;
+            flex-shrink: 0;
         }
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-            overflow: hidden;
+        .logo-text { color: #fff; }
+        .logo-text .agency { font-size: 11px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; opacity: 0.85; }
+        .logo-text .bureau { font-size: 20px; font-weight: 700; line-height: 1.2; }
+
+        /* ── NAV ── */
+        nav {
+            background: #205493;
+            border-top: 2px solid #0071bc;
         }
-        .header {
-            background: #1e3a8a;
-            color: white;
-            padding: 30px;
-            text-align: center;
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
         }
-        .header h1 { font-size: 28px; margin-bottom: 10px; }
-        .header p { font-size: 16px; opacity: 0.9; }
-        .content { padding: 40px; }
-        .info-box {
-            background: #eff6ff;
-            border-left: 4px solid #3b82f6;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 4px;
-        }
-        .info-box h2 { color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
-        .info-box ul { list-style: none; padding-left: 0; }
-        .info-box li { padding: 8px 0; color: #1e40af; }
-        .info-box li:before { content: "✓ "; color: #10b981; font-weight: bold; margin-right: 8px; }
-        .chat-button {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 18px 40px;
-            font-size: 18px;
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 18px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            display: block;
+            transition: background 0.15s;
         }
-        .chat-button:hover {
-            background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-        }
-        .footer {
+        nav a:hover, nav a.active { background: #0071bc; }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, #112e51 0%, #205493 60%, #0071bc 100%);
+            color: #fff;
+            padding: 60px 20px;
             text-align: center;
-            padding: 20px;
-            color: #6b7280;
+        }
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        .hero p {
+            font-size: 18px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── MAIN CONTENT ── */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* ── INFO SECTION ── */
+        .info-section h2 {
+            font-size: 24px;
+            color: #112e51;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #0071bc;
+        }
+        .info-section p {
+            color: #444;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        .checklist {
+            list-style: none;
+            margin-bottom: 28px;
+        }
+        .checklist li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #1b1b1b;
+        }
+        .checklist li::before {
+            content: "✓";
+            color: #2e8540;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .info-box {
+            background: #e1f3f8;
+            border-left: 4px solid #0071bc;
+            padding: 16px 20px;
+            border-radius: 0 4px 4px 0;
+            margin-bottom: 20px;
+        }
+        .info-box strong { color: #112e51; }
+        .info-box p { margin: 0; font-size: 14px; color: #444; }
+
+        /* ── CHAT PANEL ── */
+        .chat-panel {
+            background: #fff;
+            border: 1px solid #d6d7d9;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            position: sticky;
+            top: 20px;
+        }
+        .chat-panel-header {
+            background: #112e51;
+            color: #fff;
+            padding: 16px 20px;
+        }
+        .chat-panel-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .chat-panel-header p { font-size: 13px; opacity: 0.85; }
+
+        .engine-selector {
+            padding: 14px 20px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #d6d7d9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .engine-selector label { font-size: 13px; font-weight: 600; color: #444; white-space: nowrap; }
+        .engine-selector select {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #aeb0b5;
+            border-radius: 3px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        /* Chat messages area */
+        .chat-messages {
+            height: 340px;
+            overflow-y: auto;
+            padding: 16px;
+            background: #fafafa;
+            display: none;
+        }
+        .chat-messages.active { display: block; }
+
+        .message {
+            margin-bottom: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .message.bot {
+            background: #e1f3f8;
+            color: #1b1b1b;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 8px;
+            border-left: 3px solid #0071bc;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message.user {
+            background: #112e51;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px 0 8px 8px;
+            margin-left: auto;
             font-size: 14px;
         }
-        #chat-widget {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 400px;
-            height: 600px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            flex-direction: column;
-            z-index: 1000;
+        .typing {
+            color: #767676;
+            font-style: italic;
+            font-size: 13px;
+            padding: 8px 0;
         }
-        #chat-widget.active { display: flex; }
-        .chat-header {
-            background: #1e3a8a;
-            color: white;
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
+
+        /* Start button */
+        .start-btn {
+            display: block;
+            width: calc(100% - 40px);
+            margin: 16px 20px;
+            background: #0071bc;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-align: center;
+        }
+        .start-btn:hover { background: #205493; }
+        .start-btn.hidden { display: none; }
+
+        /* Input area */
+        .chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid #d6d7d9;
+            display: none;
+            gap: 8px;
+        }
+        .chat-input-area.active { display: flex; }
+        .chat-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #aeb0b5;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .chat-input:focus { outline: 2px solid #0071bc; border-color: #0071bc; }
+        .send-btn {
+            background: #0071bc;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .send-btn:hover { background: #205493; }
+
+        .engine-badge {
+            font-size: 11px;
+            background: #2e8540;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: #112e51;
+            color: #fff;
+            padding: 30px 20px;
+            margin-top: 60px;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
-        .chat-header h3 { font-size: 18px; }
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
+        footer p { font-size: 13px; opacity: 0.8; }
+        footer a { color: #9bdaf1; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .main { grid-template-columns: 1fr; }
+            .chat-panel { position: static; }
+            .hero h1 { font-size: 26px; }
         }
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f9fafb;
-        }
-        .message {
-            margin-bottom: 15px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-        .message.bot { background: #eff6ff; color: #1e40af; margin-right: auto; }
-        .message.user { background: #1e3a8a; color: white; margin-left: auto; }
-        .chat-input-area {
-            padding: 20px;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            gap: 10px;
-        }
-        .chat-input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .send-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .send-btn:hover { background: #059669; }
-        .typing { color: #6b7280; font-style: italic; padding: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏛️ U.S. Census Bureau</h1>
-            <p>Complete Your Census Survey Online</p>
+
+<!-- GOV BANNER -->
+<div class="gov-banner">
+    <div class="gov-banner-inner">
+        <svg width="16" height="11" viewBox="0 0 16 11"><path fill="#BF0A30" d="M0 0h16v1H0zm0 2h16v1H0zm0 2h16v1H0zm0 2h16v1H0zm0 2h16v1H0zm0 2h16v1H0z"/><path fill="#002868" d="M0 0h8v6H0z"/></svg>
+        <span>An official website of the United States government</span>
+        <span style="color:#0071bc;cursor:pointer;font-size:12px;">Here's how you know ▾</span>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+        <div class="logo-area">
+            <div class="logo-seal">🏛️</div>
+            <div class="logo-text">
+                <div class="agency">United States</div>
+                <div class="bureau">Census Bureau</div>
+            </div>
         </div>
-        <div class="content">
-            <div class="info-box">
-                <h2>Quick &amp; Easy Survey</h2>
-                <ul>
-                    <li>Takes only 2-3 minutes</li>
-                    <li>AI-powered assistance</li>
-                    <li>Secure and confidential</li>
-                    <li>Instant confirmation number</li>
-                </ul>
-            </div>
-            <div style="margin-bottom:20px;padding:15px;background:#f3f4f6;border-radius:8px;">
-                <label style="display:block;margin-bottom:10px;font-weight:600;color:#1e3a8a;" for="engine-select">AI Engine:</label>
-                <select id="engine-select" style="width:100%;padding:10px;border:2px solid #3b82f6;border-radius:6px;font-size:14px;">
-                    <option value="bedrock">Bedrock Agent (Legacy)</option>
-                    <option value="strands">Strands AgentCore (New)</option>
-                </select>
-            </div>
-            <button class="chat-button" onclick="startChat()">
-                💬 Start Survey Chat
-            </button>
-        <div class="footer">
-            Powered by Amazon Connect &amp; AWS Bedrock AI
+    </div>
+</header>
+
+<!-- NAV -->
+<nav>
+    <div class="nav-inner">
+        <a href="#">Topics</a>
+        <a href="#">Data &amp; Maps</a>
+        <a href="#">Surveys &amp; Programs</a>
+        <a href="#" class="active">Complete Your Survey</a>
+        <a href="#">About Us</a>
+        <a href="#">Help</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-badge">📋 2030 Census Survey Collection</div>
+    <h1>Complete Your Census Survey</h1>
+    <p>Your responses are confidential, required by law, and help determine funding for your community.</p>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- LEFT: INFO -->
+    <div class="info-section">
+        <h2>Why Your Response Matters</h2>
+        <p>
+            The U.S. Census Bureau collects data about the nation's people and economy. 
+            Census data determines how more than $675 billion in federal funds are distributed 
+            to states and communities each year for schools, hospitals, roads, and more.
+        </p>
+
+        <ul class="checklist">
+            <li>Takes only 2–3 minutes to complete</li>
+            <li>Your answers are protected by federal law (Title 13)</li>
+            <li>Information is never shared with other agencies</li>
+            <li>Available in multiple languages</li>
+            <li>Instant confirmation number provided</li>
+        </ul>
+
+        <div class="info-box">
+            <strong>Need to verify this survey is legitimate?</strong>
+            <p>Call the Census Bureau at <strong>1-800-923-8282</strong> or visit <a href="https://www.census.gov" target="_blank">census.gov</a> to confirm.</p>
+        </div>
+
+        <div class="info-box">
+            <strong>Prefer to speak with someone?</strong>
+            <p>Call our toll-free line: <strong>+1-833-289-5330</strong> — available Monday–Friday, 8am–8pm ET.</p>
         </div>
     </div>
 
-    <div id="chat-widget">
-        <div class="chat-header">
-            <div>
-                <h3>Census Survey Assistant</h3>
-                <span id="engine-badge" style="font-size:11px;background:#10b981;padding:4px 8px;border-radius:4px;margin-left:10px;">Bedrock Agent</span>
-            </div>
-            <button class="close-btn" onclick="closeChat()">×</button>
+    <!-- RIGHT: CHAT PANEL -->
+    <div class="chat-panel">
+        <div class="chat-panel-header">
+            <h3>Census Survey Assistant <span class="engine-badge" id="engine-badge" style="display:none"></span></h3>
+            <p>AI-powered — available 24/7</p>
         </div>
+
+        <div class="engine-selector">
+            <label for="engine-select">AI Engine:</label>
+            <select id="engine-select">
+                <option value="bedrock">Bedrock Agent</option>
+                <option value="strands">Strands AgentCore</option>
+            </select>
+        </div>
+
         <div class="chat-messages" id="messages"></div>
-        <div class="chat-input-area">
+
+        <button class="start-btn" id="start-btn" onclick="startChat()">
+            💬 Start Your Survey Now
+        </button>
+
+        <div class="chat-input-area" id="input-area">
             <input type="text" class="chat-input" id="chat-input"
-                   placeholder="Type your message..."
+                   placeholder="Type your response..."
                    onkeypress="handleKeyPress(event)">
             <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
     </div>
 
-    <script>
-        const ENDPOINTS = {
-            bedrock: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/chat',
-            strands: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/strands'
-        };
-        let sessionId = 'web-' + Date.now();
-        let apiUrl = ENDPOINTS.bedrock;
+</div>
 
-        async function startChat() {
-            const engine = document.getElementById('engine-select').value;
-            apiUrl = ENDPOINTS[engine];
-            sessionId = 'web-' + Date.now();
-            document.getElementById('engine-badge').textContent = engine === 'strands' ? 'Strands AgentCore' : 'Bedrock Agent';
-            document.getElementById('messages').innerHTML = '';
-            document.getElementById('chat-widget').classList.add('active');
-            // Trigger agent greeting
-            showTyping();
-            try {
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, inputText: '__greeting__', useAgent: true })
-                });
-                const data = await res.json();
-                hideTyping();
-                addMessage('bot', data.response || 'Hello! How can I help you today?');
-            } catch (e) {
-                hideTyping();
-                addMessage('bot', 'Hello! Welcome to the U.S. Census Bureau. How can I help you today?');
-            }
+<!-- FOOTER -->
+<footer>
+    <div class="footer-inner">
+        <div>
+            <p style="font-weight:700;font-size:15px;margin-bottom:6px;">U.S. Census Bureau</p>
+            <p>4600 Silver Hill Road, Washington, DC 20233</p>
+        </div>
+        <div style="text-align:right;">
+            <p><a href="https://www.census.gov/about/policies/privacy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="https://www.census.gov/about/policies/privacy/privacy_policy.html">Accessibility</a></p>
+            <p style="margin-top:6px;">Powered by AWS Bedrock AI</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const ENDPOINTS = {
+        bedrock: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/chat',
+        strands: 'https://ng4qickb3e.execute-api.us-east-1.amazonaws.com/prod/strands'
+    };
+    let sessionId = 'web-' + Date.now();
+    let apiUrl = ENDPOINTS.bedrock;
+
+    async function startChat() {
+        const engine = document.getElementById('engine-select').value;
+        apiUrl = ENDPOINTS[engine];
+        sessionId = 'web-' + Date.now();
+
+        const badge = document.getElementById('engine-badge');
+        badge.textContent = engine === 'strands' ? 'Strands AgentCore' : 'Bedrock Agent';
+        badge.style.display = 'inline';
+
+        document.getElementById('start-btn').classList.add('hidden');
+        document.getElementById('engine-select').parentElement.style.display = 'none';
+        document.getElementById('messages').classList.add('active');
+        document.getElementById('input-area').classList.add('active');
+
+        showTyping();
+        try {
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, inputText: '__greeting__', useAgent: true })
+            });
+            const data = await res.json();
+            hideTyping();
+            addMessage('bot', data.response || 'Hello! How can I help you complete your survey today?');
+        } catch (e) {
+            hideTyping();
+            addMessage('bot', 'Hello! Welcome to the U.S. Census Bureau. Please provide your phone number to begin.');
         }
+        document.getElementById('chat-input').focus();
+    }
 
-        function closeChat() {
-            document.getElementById('chat-widget').classList.remove('active');
+    function addMessage(type, text) {
+        const div = document.createElement('div');
+        div.className = 'message ' + type;
+        div.textContent = text;
+        const msgs = document.getElementById('messages');
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'typing';
+        div.id = 'typing-indicator';
+        div.textContent = 'Assistant is typing...';
+        const msgs = document.getElementById('messages');
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function hideTyping() {
+        const el = document.getElementById('typing-indicator');
+        if (el) el.remove();
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage('user', message);
+        input.value = '';
+        showTyping();
+
+        try {
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, inputText: message, useAgent: true })
+            });
+            const data = await res.json();
+            hideTyping();
+            addMessage('bot', data.response || 'I\'m having trouble processing that. Please try again.');
+        } catch (e) {
+            hideTyping();
+            addMessage('bot', 'Connection error. Please try calling +1-833-289-5330 or try again later.');
         }
+    }
 
-        function addMessage(type, text) {
-            const messagesDiv = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + type;
-            messageDiv.textContent = text;
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function showTyping() {
-            const messagesDiv = document.getElementById('messages');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing';
-            typingDiv.id = 'typing-indicator';
-            typingDiv.textContent = 'Assistant is typing...';
-            messagesDiv.appendChild(typingDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function hideTyping() {
-            const el = document.getElementById('typing-indicator');
-            if (el) el.remove();
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message) return;
-
-            addMessage('user', message);
-            input.value = '';
-            showTyping();
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, inputText: message, useAgent: true })
-                });
-                const data = await response.json();
-                hideTyping();
-                addMessage('bot', data.response || 'I\'m having trouble processing your request. Please try again.');
-            } catch (error) {
-                hideTyping();
-                addMessage('bot', 'I\'m having trouble connecting. Please try calling us at +1-833-289-5330 or try again later.');
-                console.error('Error:', error);
-            }
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
-        }
-    </script>
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
 </body>
 </html>
