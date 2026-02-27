@@ -336,29 +336,6 @@ Resources:
             Channel: VOICE
             QueueArn: !GetAtt SurveyCompletionQueue.QueueArn
 
-  # Security Profiles
-  AgentSecurityProfile:
-    Type: AWS::Connect::SecurityProfile
-    Properties:
-      InstanceArn: !GetAtt ConnectInstance.Arn
-      SecurityProfileName: CensusAgent
-      Description: Standard agent permissions for census operations
-      Permissions:
-        - BasicAgentAccess
-        - OutboundCallAccess
-
-  SupervisorSecurityProfile:
-    Type: AWS::Connect::SecurityProfile
-    Properties:
-      InstanceArn: !GetAtt ConnectInstance.Arn
-      SecurityProfileName: CensusSupervisor
-      Description: Supervisor permissions with monitoring and reporting
-      Permissions:
-        - BasicAgentAccess
-        - OutboundCallAccess
-        - AccessMetrics
-        - AccessQueueMetrics
-
   # CloudWatch Log Group
   ConnectLogGroup:
     Type: AWS::Logs::LogGroup

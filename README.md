@@ -14,7 +14,6 @@ Complete, production-ready Amazon Connect contact center for conducting census s
 | **Amazon Connect Instance** | Full contact center with voice/chat, ContactLens analytics, call recording |
 | **5 Queues** | GeneralInquiries, SurveyCompletion, TechnicalSupport, SpanishLanguage, Escalations |
 | **4 Routing Profiles** | GeneralAgent, TechnicalSupport, SpanishAgent, Supervisor |
-| **2 Security Profiles** | CensusAgent (standard), CensusSupervisor (monitoring) |
 | **Lambda Backend** | Serverless functions for survey logic, DynamoDB integration, Bedrock AI |
 | **DynamoDB Tables** | Census responses and address lookup storage |
 | **Lex Bot** | Natural language understanding for voice interactions |
@@ -160,7 +159,6 @@ MarcS-CensusDemo/
 - **Amazon Connect Instance** - Contact center with ContactLens
 - **5 Queues** - GeneralInquiries, SurveyCompletion, TechnicalSupport, SpanishLanguage, Escalations
 - **4 Routing Profiles** - GeneralAgent, TechnicalSupport, SpanishAgent, Supervisor
-- **2 Security Profiles** - CensusAgent, CensusSupervisor
 - **Lambda Function** - `CensusAgentBackend` with DynamoDB + Bedrock access
 - **DynamoDB Tables** - `CensusResponses`, `CensusAddresses`
 - **S3 Bucket** - Call recordings with lifecycle policies
