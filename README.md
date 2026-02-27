@@ -22,10 +22,29 @@ Complete, production-ready Amazon Connect contact center for conducting census s
 
 ### Prerequisites
 - AWS Account with admin access
-- AWS CLI configured
+- AWS CLI configured (`aws configure`)
 - Basic familiarity with Amazon Connect
 
-### Deploy Infrastructure
+### One-Command Deployment
+
+```bash
+git clone https://github.com/636137/MarcS-CensusDemo
+cd MarcS-CensusDemo/cloudformation
+./deploy-full.sh
+```
+
+**That's it!** The script automatically:
+- ✅ Packages Lambda code
+- ✅ Creates S3 bucket
+- ✅ Deploys CloudFormation stack
+- ✅ Loads sample data
+- ✅ Tests Lambda function
+- ✅ Displays Connect console URL
+
+### Manual Deployment (Advanced)
+
+<details>
+<summary>Click to expand manual steps</summary>
 
 ```bash
 # 1. Clone repository
@@ -35,8 +54,9 @@ cd MarcS-CensusDemo
 # 2. Package Lambda function
 cd lambda
 zip lambda.zip index.js package.json
-aws s3 mb s3://census-lambda-YOUR_ACCOUNT_ID
-aws s3 cp lambda.zip s3://census-lambda-YOUR_ACCOUNT_ID/
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws s3 mb s3://census-lambda-${ACCOUNT_ID}
+aws s3 cp lambda.zip s3://census-lambda-${ACCOUNT_ID}/
 
 # 3. Deploy CloudFormation stack
 cd ../cloudformation
@@ -57,6 +77,8 @@ aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs' \
   --output table
 ```
+
+</details>
 
 ### Configure Contact Center
 
@@ -208,6 +230,44 @@ aws logs tail /aws/lambda/CensusAgentBackend --follow
 - ✓ CloudTrail logging
 - ✓ Point-in-time recovery (DynamoDB)
 
+## Troubleshooting
+
+### "S3 bucket does not exist" Error
+```bash
+# Create bucket manually
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws s3 mb s3://census-lambda-${ACCOUNT_ID}
+```
+
+### "Instance alias already exists" Error
+```bash
+# Use unique instance name
+aws cloudformation create-stack \
+  --stack-name census-connect \
+  --template-body file://census-connect.yaml \
+  --parameters ParameterKey=InstanceAlias,ParameterValue=census-enumerator-$(date +%s) \
+  --capabilities CAPABILITY_IAM
+```
+
+### Stack Creation Failed
+```bash
+# Check error details
+aws cloudformation describe-stack-events \
+  --stack-name census-connect \
+  --query 'StackEvents[?ResourceStatus==`CREATE_FAILED`]'
+```
+
+### Lambda Function Errors
+```bash
+# View logs
+aws logs tail /aws/lambda/CensusAgentBackend --follow
+```
+
+### Connect Instance Not Accessible
+- Verify instance is ACTIVE: `aws connect list-instances`
+- Check IAM permissions for Connect access
+- Ensure you're in correct region (us-east-1)
+
 ## Cleanup
 
 ```bash
@@ -216,14 +276,16 @@ aws cloudformation delete-stack \
   --stack-name census-connect \
   --region us-east-1
 
-# Delete S3 bucket
-aws s3 rb s3://census-lambda-YOUR_ACCOUNT_ID --force
-aws s3 rb s3://census-recordings-YOUR_ACCOUNT_ID --force
+# Delete S3 buckets
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws s3 rb s3://census-lambda-${ACCOUNT_ID} --force
+aws s3 rb s3://census-recordings-${ACCOUNT_ID} --force
 ```
 
 ## Documentation
 
 - [Deployment Guide](DEPLOYMENT_GUIDE.md) - Detailed setup instructions
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
 - [FedRAMP Compliance](FEDRAMP_COMPLIANCE.md) - Government security controls
 - [Disaster Recovery](DISASTER_RECOVERY.md) - DR procedures and RTO/RPO
 - [Service Quotas](SERVICE_QUOTAS_AND_LIMITS.md) - AWS limits and scaling

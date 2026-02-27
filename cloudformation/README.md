@@ -20,7 +20,20 @@ This directory contains AWS CloudFormation templates for deploying the Census En
 
 ## Deployment
 
-### 1. Prepare Lambda Code
+### Automated Deployment (Recommended)
+
+```bash
+cd ../cloudformation
+./deploy-full.sh
+```
+
+The script automatically handles:
+- Lambda packaging and S3 upload
+- CloudFormation stack creation
+- Sample data loading
+- Validation and testing
+
+### Manual Deployment
 
 ```bash
 cd ../lambda
