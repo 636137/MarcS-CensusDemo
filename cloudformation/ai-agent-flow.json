@@ -1,0 +1,98 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "Greeting",
+  "Actions": [
+    {
+      "Identifier": "Greeting",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for calling the Census Bureau. I'm an AI assistant here to help you complete your census survey. This will only take a few minutes."
+      },
+      "Transitions": {
+        "NextAction": "InvokeAIAgent"
+      }
+    },
+    {
+      "Identifier": "InvokeAIAgent",
+      "Type": "InvokeFlowModule",
+      "Parameters": {
+        "FlowModuleId": "BEDROCK_AGENT_MODULE",
+        "FlowModuleType": "AmazonQConnect"
+      },
+      "Transitions": {
+        "NextAction": "CheckCompletion",
+        "Errors": [
+          {
+            "ErrorType": "NoMatchingError",
+            "NextAction": "ErrorMessage"
+          }
+        ]
+      }
+    },
+    {
+      "Identifier": "CheckCompletion",
+      "Type": "Compare",
+      "Parameters": {
+        "ComparisonValue": "$.Attributes.SurveyComplete"
+      },
+      "Transitions": {
+        "NextAction": "ThankYou",
+        "Conditions": [
+          {
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": ["true"]
+            },
+            "NextAction": "ThankYou"
+          }
+        ],
+        "DefaultNextAction": "TransferToAgent"
+      }
+    },
+    {
+      "Identifier": "ThankYou",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for completing your census survey. Your participation helps our community. Goodbye!"
+      },
+      "Transitions": {
+        "NextAction": "Disconnect"
+      }
+    },
+    {
+      "Identifier": "TransferToAgent",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Let me transfer you to a live agent who can assist you further."
+      },
+      "Transitions": {
+        "NextAction": "TransferToQueue"
+      }
+    },
+    {
+      "Identifier": "TransferToQueue",
+      "Type": "TransferToQueue",
+      "Parameters": {
+        "QueueId": "GENERAL_INQUIRIES_QUEUE"
+      },
+      "Transitions": {
+        "NextAction": "Disconnect"
+      }
+    },
+    {
+      "Identifier": "ErrorMessage",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "I'm sorry, I'm having technical difficulties. Let me transfer you to an agent."
+      },
+      "Transitions": {
+        "NextAction": "TransferToQueue"
+      }
+    },
+    {
+      "Identifier": "Disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {}
+    }
+  ]
+}

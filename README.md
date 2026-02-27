@@ -21,6 +21,7 @@ Complete, production-ready Amazon Connect contact center for conducting census s
 | **Lex Bot** | Natural language understanding for voice interactions |
 | **S3 Storage** | Call recordings with 7-year retention |
 | **IAM Security** | Least-privilege roles and encryption at rest |
+| **AI Agent** | Bedrock-powered conversational agent for self-service survey collection |
 | **Contact Lens Rules** | 20 real-time and post-call rules with automated categorization |
 | **Evaluation Forms** | 4 comprehensive QA forms (21 questions) for quality assurance |
 
@@ -129,7 +130,21 @@ aws cloudformation describe-stacks \
    **Note:** Requires Contact Lens to be enabled on the instance.
    Enable in Connect console: Analytics and optimization → Contact Lens
 
-5. **Claim Phone Number**
+5. **Add AI Agent for Self-Service (Optional)**
+   ```bash
+   cd cloudformation
+   ./add-ai-agent.sh YOUR_INSTANCE_ID
+   ```
+   This creates an AI-powered conversational agent using Amazon Bedrock:
+   - **Natural conversation** for survey collection
+   - **Address verification** and data validation
+   - **Automated data storage** in DynamoDB
+   - **Confirmation number** generation
+   - **Seamless fallback** to human agent if needed
+   
+   See [AI Agent Setup Guide](docs/AI_AGENT_SETUP.md) for complete instructions.
+
+6. **Claim Phone Number**
    - Channels → Phone numbers → Claim number
    - Select DID or toll-free
 
