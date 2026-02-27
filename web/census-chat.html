@@ -198,11 +198,28 @@
         let sessionId = 'web-' + Date.now();
         let apiUrl = ENDPOINTS.bedrock;
 
-        function startChat() {
+        async function startChat() {
             const engine = document.getElementById('engine-select').value;
             apiUrl = ENDPOINTS[engine];
+            sessionId = 'web-' + Date.now();
             document.getElementById('engine-badge').textContent = engine === 'strands' ? 'Strands AgentCore' : 'Bedrock Agent';
+            document.getElementById('messages').innerHTML = '';
             document.getElementById('chat-widget').classList.add('active');
+            // Trigger agent greeting
+            showTyping();
+            try {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, inputText: '__greeting__', useAgent: true })
+                });
+                const data = await res.json();
+                hideTyping();
+                addMessage('bot', data.response || 'Hello! How can I help you today?');
+            } catch (e) {
+                hideTyping();
+                addMessage('bot', 'Hello! Welcome to the U.S. Census Bureau. How can I help you today?');
+            }
         }
 
         function closeChat() {

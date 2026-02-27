@@ -96,6 +96,10 @@ def lambda_handler(event, context):
         session_id = body.get('sessionId', 'default')
         input_text = body.get('inputText', '')
 
+        # Handle greeting trigger
+        if input_text == '__greeting__':
+            input_text = 'Greet the customer and ask for their phone number to begin the census survey.'
+
         # Get or create conversation history for this session
         if session_id not in sessions:
             sessions[session_id] = []
