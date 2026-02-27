@@ -92,19 +92,29 @@ aws cloudformation describe-stacks \
    - Users → Add new user
    - Assign admin security profile
 
-3. **Claim Phone Number**
+3. **Add Contact Lens Evaluation Forms (Optional)**
+   ```bash
+   cd cloudformation
+   ./add-contact-lens-rules.sh YOUR_INSTANCE_ID
+   ```
+   This adds 20 evaluation forms for quality assurance:
+   - PII Detection, Script Compliance, Sentiment Analysis
+   - Escalation Detection, Callback Tracking, Language Barriers
+   - Data Verification, Customer Satisfaction, and more
+
+4. **Claim Phone Number**
    - Channels → Phone numbers → Claim number
    - Select DID or toll-free
 
-4. **Import Contact Flow**
+5. **Import Contact Flow**
    - Routing → Contact flows → Create contact flow
    - Import: `cloudformation/simple-contact-flow.json`
    - Publish the flow
 
-5. **Assign Number to Flow**
+6. **Assign Number to Flow**
    - Phone numbers → Edit → Assign to contact flow
 
-6. **Test**
+7. **Test**
    - Call your number
    - Follow survey prompts
    - Check DynamoDB for responses
@@ -188,6 +198,7 @@ MarcS-CensusDemo/
 - **Lex Bot** - Natural language understanding
 - **Bedrock Integration** - Generative AI responses
 - **Contact Lens** - Real-time analytics and sentiment
+- **20 Evaluation Forms** - Quality assurance and compliance tracking
 
 ## Testing
 
