@@ -198,14 +198,166 @@ Resources:
           StartTime: { Hours: 0, Minutes: 0 }
           EndTime: { Hours: 23, Minutes: 59 }
 
-  # Connect Queue
-  CensusQueue:
+  # Connect Queues
+  GeneralInquiriesQueue:
     Type: AWS::Connect::Queue
     Properties:
       InstanceArn: !GetAtt ConnectInstance.Arn
-      Name: CensusQueue
+      Name: GeneralInquiries
+      Description: General census questions and information
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      MaxContacts: 50
+
+  SurveyCompletionQueue:
+    Type: AWS::Connect::Queue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: SurveyCompletion
+      Description: Complete census survey over phone
       HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
       MaxContacts: 100
+
+  TechnicalSupportQueue:
+    Type: AWS::Connect::Queue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: TechnicalSupport
+      Description: Help with online portal and technical issues
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      MaxContacts: 30
+
+  SpanishLanguageQueue:
+    Type: AWS::Connect::Queue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: SpanishLanguage
+      Description: Spanish-speaking census assistance
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      MaxContacts: 50
+
+  EscalationsQueue:
+    Type: AWS::Connect::Queue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: Escalations
+      Description: Supervisor escalations and complex cases
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      MaxContacts: 20
+
+  # Routing Profiles
+  GeneralAgentRoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: GeneralAgent
+      Description: General census agents handling surveys and inquiries
+      DefaultOutboundQueueArn: !GetAtt SurveyCompletionQueue.QueueArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+        - Channel: CHAT
+          Concurrency: 3
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt GeneralInquiriesQueue.QueueArn
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt SurveyCompletionQueue.QueueArn
+
+  TechnicalSupportRoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: TechnicalSupport
+      Description: Technical support specialists
+      DefaultOutboundQueueArn: !GetAtt TechnicalSupportQueue.QueueArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+        - Channel: CHAT
+          Concurrency: 2
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt TechnicalSupportQueue.QueueArn
+
+  SpanishAgentRoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: SpanishAgent
+      Description: Spanish-speaking agents
+      DefaultOutboundQueueArn: !GetAtt SpanishLanguageQueue.QueueArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+        - Channel: CHAT
+          Concurrency: 3
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt SpanishLanguageQueue.QueueArn
+
+  SupervisorRoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: Supervisor
+      Description: Supervisors handling escalations
+      DefaultOutboundQueueArn: !GetAtt EscalationsQueue.QueueArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 2
+        - Channel: CHAT
+          Concurrency: 5
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt EscalationsQueue.QueueArn
+        - Delay: 0
+          Priority: 2
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt GeneralInquiriesQueue.QueueArn
+        - Delay: 0
+          Priority: 2
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !GetAtt SurveyCompletionQueue.QueueArn
+
+  # Security Profiles
+  AgentSecurityProfile:
+    Type: AWS::Connect::SecurityProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      SecurityProfileName: CensusAgent
+      Description: Standard agent permissions for census operations
+      Permissions:
+        - BasicAgentAccess
+        - OutboundCallAccess
+
+  SupervisorSecurityProfile:
+    Type: AWS::Connect::SecurityProfile
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      SecurityProfileName: CensusSupervisor
+      Description: Supervisor permissions with monitoring and reporting
+      Permissions:
+        - BasicAgentAccess
+        - OutboundCallAccess
+        - AccessMetrics
+        - AccessQueueMetrics
 
   # CloudWatch Log Group
   ConnectLogGroup:
@@ -242,3 +394,20 @@ Outputs:
   RecordingsBucket:
     Value: !Ref CallRecordingsBucket
     Description: S3 bucket for call recordings
+
+  Queues:
+    Value: !Sub |
+      GeneralInquiries: ${GeneralInquiriesQueue.QueueArn}
+      SurveyCompletion: ${SurveyCompletionQueue.QueueArn}
+      TechnicalSupport: ${TechnicalSupportQueue.QueueArn}
+      SpanishLanguage: ${SpanishLanguageQueue.QueueArn}
+      Escalations: ${EscalationsQueue.QueueArn}
+    Description: Queue ARNs for routing configuration
+
+  RoutingProfiles:
+    Value: !Sub |
+      GeneralAgent: ${GeneralAgentRoutingProfile.RoutingProfileArn}
+      TechnicalSupport: ${TechnicalSupportRoutingProfile.RoutingProfileArn}
+      SpanishAgent: ${SpanishAgentRoutingProfile.RoutingProfileArn}
+      Supervisor: ${SupervisorRoutingProfile.RoutingProfileArn}
+    Description: Routing profile ARNs for user assignment

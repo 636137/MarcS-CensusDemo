@@ -12,6 +12,9 @@ Complete, production-ready Amazon Connect contact center for conducting census s
 | Component | Description |
 |-----------|-------------|
 | **Amazon Connect Instance** | Full contact center with voice/chat, ContactLens analytics, call recording |
+| **5 Queues** | GeneralInquiries, SurveyCompletion, TechnicalSupport, SpanishLanguage, Escalations |
+| **4 Routing Profiles** | GeneralAgent, TechnicalSupport, SpanishAgent, Supervisor |
+| **2 Security Profiles** | CensusAgent (standard), CensusSupervisor (monitoring) |
 | **Lambda Backend** | Serverless functions for survey logic, DynamoDB integration, Bedrock AI |
 | **DynamoDB Tables** | Census responses and address lookup storage |
 | **Lex Bot** | Natural language understanding for voice interactions |
@@ -155,11 +158,33 @@ MarcS-CensusDemo/
 
 ### Core Infrastructure
 - **Amazon Connect Instance** - Contact center with ContactLens
+- **5 Queues** - GeneralInquiries, SurveyCompletion, TechnicalSupport, SpanishLanguage, Escalations
+- **4 Routing Profiles** - GeneralAgent, TechnicalSupport, SpanishAgent, Supervisor
+- **2 Security Profiles** - CensusAgent, CensusSupervisor
 - **Lambda Function** - `CensusAgentBackend` with DynamoDB + Bedrock access
 - **DynamoDB Tables** - `CensusResponses`, `CensusAddresses`
 - **S3 Bucket** - Call recordings with lifecycle policies
 - **IAM Roles** - Least-privilege execution roles
 - **CloudWatch Logs** - Centralized logging
+
+### Queue Configuration
+
+| Queue | Purpose | Max Contacts |
+|-------|---------|--------------|
+| **GeneralInquiries** | General census questions | 50 |
+| **SurveyCompletion** | Complete census survey | 100 |
+| **TechnicalSupport** | Portal and technical help | 30 |
+| **SpanishLanguage** | Spanish-speaking assistance | 50 |
+| **Escalations** | Supervisor escalations | 20 |
+
+### Routing Profiles
+
+| Profile | Queues | Voice | Chat |
+|---------|--------|-------|------|
+| **GeneralAgent** | GeneralInquiries, SurveyCompletion | 1 | 3 |
+| **TechnicalSupport** | TechnicalSupport | 1 | 2 |
+| **SpanishAgent** | SpanishLanguage | 1 | 3 |
+| **Supervisor** | All queues | 2 | 5 |
 
 ### Optional Components
 - **Lex Bot** - Natural language understanding
