@@ -87,42 +87,80 @@ SYSTEM_PROMPT = """You are a helpful U.S. Census Bureau survey assistant. Guide 
 
 Be warm, professional, and concise. Keep responses under 150 words."""
 
+ESCALATION_PHRASES = {'agent', 'live agent', 'human', 'representative', 'operator', 'speak to someone', 'talk to someone'}
+
+def wants_agent(text: str) -> bool:
+    t = text.lower().strip()
+    return any(phrase in t for phrase in ESCALATION_PHRASES)
+
 # Session store (in-memory, Lambda warm container)
 sessions = {}
 
 def lambda_handler(event, context):
+    # ── Amazon Connect invocation ──
+    if 'Details' in event:
+        attrs = event['Details'].get('ContactData', {}).get('Attributes', {})
+        session_id = event['Details']['ContactData'].get('ContactId', 'connect-session')
+        input_text = attrs.get('inputText', '')
+
+        if input_text == '__greeting__':
+            input_text = 'Greet the customer and ask for their phone number to begin the census survey.'
+
+        if wants_agent(input_text):
+            raise Exception('ESCALATE_TO_AGENT')
+
+        if session_id not in sessions:
+            sessions[session_id] = []
+
+        model = BedrockModel(model_id='us.anthropic.claude-sonnet-4-6', region_name='us-east-1')
+        agent = Agent(
+            model=model,
+            tools=[verify_address, save_survey_data, generate_confirmation],
+            system_prompt=SYSTEM_PROMPT,
+            messages=sessions[session_id]
+        )
+        result = agent(input_text)
+        sessions[session_id] = agent.messages
+
+        return {
+            'response': str(result),
+            'escalate': 'false',
+            'sessionId': session_id,
+            'engine': 'strands'
+        }
+
+    # ── HTTP / web chat invocation ──
     try:
         body = json.loads(event.get('body', '{}'))
         session_id = body.get('sessionId', 'default')
         input_text = body.get('inputText', '')
 
-        # Handle greeting trigger
         if input_text == '__greeting__':
             input_text = 'Greet the customer and ask for their phone number to begin the census survey.'
 
-        # Get or create conversation history for this session
+        if wants_agent(input_text):
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({
+                    'response': 'Of course! To connect with a live agent, please call us at 1-833-289-5330 and say "agent" when prompted.',
+                    'escalate': True,
+                    'sessionId': session_id,
+                    'engine': 'strands'
+                })
+            }
+
         if session_id not in sessions:
             sessions[session_id] = []
 
-        messages = sessions[session_id]
-
-        # Build agent with conversation history
-        model = BedrockModel(
-            model_id='us.anthropic.claude-sonnet-4-6',
-            region_name='us-east-1'
-        )
-
+        model = BedrockModel(model_id='us.anthropic.claude-sonnet-4-6', region_name='us-east-1')
         agent = Agent(
             model=model,
             tools=[verify_address, save_survey_data, generate_confirmation],
             system_prompt=SYSTEM_PROMPT,
-            messages=messages
+            messages=sessions[session_id]
         )
-
         result = agent(input_text)
-        response_text = str(result)
-
-        # Persist updated conversation
         sessions[session_id] = agent.messages
 
         return {
@@ -134,7 +172,8 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Headers': 'Content-Type'
             },
             'body': json.dumps({
-                'response': response_text,
+                'response': str(result),
+                'escalate': False,
                 'sessionId': session_id,
                 'engine': 'strands'
             })

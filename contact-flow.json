@@ -12,12 +12,7 @@
       },
       "Transitions": {
         "NextAction": "invoke-lambda",
-        "Errors": [
-          {
-            "NextAction": "invoke-lambda",
-            "ErrorType": "NoMatchingError"
-          }
-        ],
+        "Errors": [{"NextAction": "invoke-lambda", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
@@ -32,10 +27,22 @@
         "NextAction": "speak-response",
         "Errors": [
           {
-            "NextAction": "set-queue",
+            "NextAction": "escalate-message",
             "ErrorType": "NoMatchingError"
           }
         ],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "escalate-message",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Of course! Please hold while I connect you with a live agent."
+      },
+      "Transitions": {
+        "NextAction": "set-queue",
+        "Errors": [{"NextAction": "set-queue", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
@@ -47,12 +54,7 @@
       },
       "Transitions": {
         "NextAction": "get-customer-input",
-        "Errors": [
-          {
-            "NextAction": "set-queue",
-            "ErrorType": "NoMatchingError"
-          }
-        ],
+        "Errors": [{"NextAction": "set-queue", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
@@ -67,18 +69,9 @@
       "Transitions": {
         "NextAction": "store-customer-input",
         "Errors": [
-          {
-            "NextAction": "set-queue",
-            "ErrorType": "InputTimeLimitExceeded"
-          },
-          {
-            "NextAction": "store-customer-input",
-            "ErrorType": "NoMatchingCondition"
-          },
-          {
-            "NextAction": "set-queue",
-            "ErrorType": "NoMatchingError"
-          }
+          {"NextAction": "set-queue", "ErrorType": "InputTimeLimitExceeded"},
+          {"NextAction": "store-customer-input", "ErrorType": "NoMatchingCondition"},
+          {"NextAction": "set-queue", "ErrorType": "NoMatchingError"}
         ],
         "Conditions": []
       }
@@ -93,12 +86,7 @@
       },
       "Transitions": {
         "NextAction": "invoke-lambda",
-        "Errors": [
-          {
-            "NextAction": "invoke-lambda",
-            "ErrorType": "NoMatchingError"
-          }
-        ],
+        "Errors": [{"NextAction": "invoke-lambda", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
@@ -110,12 +98,7 @@
       },
       "Transitions": {
         "NextAction": "transfer-to-agent",
-        "Errors": [
-          {
-            "NextAction": "disconnect",
-            "ErrorType": "NoMatchingError"
-          }
-        ],
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
@@ -127,12 +110,7 @@
       },
       "Transitions": {
         "NextAction": "disconnect",
-        "Errors": [
-          {
-            "NextAction": "disconnect",
-            "ErrorType": "NoMatchingError"
-          }
-        ],
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
         "Conditions": []
       }
     },
