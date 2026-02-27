@@ -95,6 +95,17 @@ aws cloudformation describe-stacks \
 3. **Add Contact Lens Evaluation Forms (Optional)**
    ```bash
    cd cloudformation
+   ./add-evaluation-forms.sh YOUR_INSTANCE_ID
+   ```
+   This adds 4 comprehensive evaluation forms (21 questions total):
+   - **Compliance & Security** (4 questions): PII, privacy, script adherence
+   - **Call Quality & Service** (6 questions): Sentiment, communication, professionalism
+   - **Survey & Data Quality** (5 questions): Address, household, data verification
+   - **Issue Resolution** (6 questions): Escalations, language, technical issues
+
+4. **Add Contact Lens Rules (Optional)**
+   ```bash
+   cd cloudformation
    ./add-contact-lens-rules.sh YOUR_INSTANCE_ID
    ```
    This adds 20 Contact Lens rules with categories:
@@ -114,7 +125,7 @@ aws cloudformation describe-stacks \
    **Note:** Requires Contact Lens to be enabled on the instance.
    Enable in Connect console: Analytics and optimization → Contact Lens
 
-4. **Claim Phone Number**
+5. **Claim Phone Number**
    - Channels → Phone numbers → Claim number
    - Select DID or toll-free
 
@@ -210,7 +221,7 @@ MarcS-CensusDemo/
 - **Lex Bot** - Natural language understanding
 - **Bedrock Integration** - Generative AI responses
 - **Contact Lens** - Real-time analytics and sentiment (requires manual enablement)
-- **20 Evaluation Forms** - Quality assurance forms (script provided)
+- **4 Evaluation Forms** - Comprehensive quality assurance (21 questions total)
 - **20 Contact Lens Rules** - Real-time alerts and post-call categories (script provided)
 
 ## Testing
