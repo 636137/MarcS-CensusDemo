@@ -1,1 +1,102 @@
-{"Version": "2019-10-30", "StartAction": "set-greeting", "Actions": [{"Identifier": "set-greeting", "Type": "UpdateContactAttributes", "Parameters": {"Attributes": {"inputText": "__greeting__"}}, "Transitions": {"NextAction": "invoke-lambda", "Errors": [{"NextAction": "invoke-lambda", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "invoke-lambda", "Type": "InvokeLambdaFunction", "Parameters": {"LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusStrandsAgent", "InvocationTimeLimitSeconds": "8"}, "Transitions": {"NextAction": "speak-response", "Errors": [{"NextAction": "escalate-message", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "escalate-message", "Type": "MessageParticipant", "Parameters": {"Text": "Of course! Please hold while I connect you with a live agent."}, "Transitions": {"NextAction": "set-queue", "Errors": [{"NextAction": "set-queue", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "speak-response", "Type": "MessageParticipant", "Parameters": {"Text": "$.External.response"}, "Transitions": {"NextAction": "get-customer-input", "Errors": [{"NextAction": "set-queue", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "get-customer-input", "Type": "GetParticipantInput", "Parameters": {"Text": "Please type your response.", "StoreInput": "False", "InputTimeLimitSeconds": "120"}, "Transitions": {"NextAction": "store-customer-input", "Errors": [{"NextAction": "set-queue", "ErrorType": "InputTimeLimitExceeded"}, {"NextAction": "store-customer-input", "ErrorType": "NoMatchingCondition"}, {"NextAction": "set-queue", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "store-customer-input", "Type": "UpdateContactAttributes", "Parameters": {"Attributes": {"inputText": "$.StoredCustomerInput"}}, "Transitions": {"NextAction": "invoke-lambda", "Errors": [{"NextAction": "invoke-lambda", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "set-queue", "Type": "UpdateContactTargetQueue", "Parameters": {"QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/f730136d-1810-4f3f-9ee0-bd75d9453b09"}, "Transitions": {"NextAction": "transfer-to-agent", "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "transfer-to-agent", "Type": "TransferToFlow", "Parameters": {"ContactFlowId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/contact-flow/29b96562-989a-4234-8906-c150df0342e6"}, "Transitions": {"NextAction": "disconnect", "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}], "Conditions": []}}, {"Identifier": "disconnect", "Type": "DisconnectParticipant", "Parameters": {}, "Transitions": {}}]}
+{
+  "Version": "2019-10-30",
+  "StartAction": "invoke-greeting",
+  "Actions": [
+    {
+      "Identifier": "invoke-greeting",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusStrandsAgent",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "inputText": "__greeting__"
+        }
+      },
+      "Transitions": {
+        "NextAction": "speak-response",
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "speak-response",
+      "Type": "MessageParticipant",
+      "Parameters": {"Text": "$.External.response"},
+      "Transitions": {
+        "NextAction": "wait-for-input",
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "wait-for-input",
+      "Type": "GetParticipantInput",
+      "Parameters": {
+        "Text": "Please type your response.",
+        "StoreInput": "False",
+        "InputTimeLimitSeconds": "120"
+      },
+      "Transitions": {
+        "NextAction": "invoke-turn",
+        "Errors": [
+          {"NextAction": "disconnect", "ErrorType": "InputTimeLimitExceeded"},
+          {"NextAction": "invoke-turn", "ErrorType": "NoMatchingCondition"},
+          {"NextAction": "invoke-turn", "ErrorType": "NoMatchingError"}
+        ],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "invoke-turn",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusStrandsAgent",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "inputText": "$.StoredCustomerInput"
+        }
+      },
+      "Transitions": {
+        "NextAction": "speak-response",
+        "Errors": [{"NextAction": "escalate-message", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "escalate-message",
+      "Type": "MessageParticipant",
+      "Parameters": {"Text": "Of course! Please hold while I connect you with a live agent."},
+      "Transitions": {
+        "NextAction": "set-queue",
+        "Errors": [{"NextAction": "set-queue", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "set-queue",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {"QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/f730136d-1810-4f3f-9ee0-bd75d9453b09"},
+      "Transitions": {
+        "NextAction": "transfer-to-agent",
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "transfer-to-agent",
+      "Type": "TransferToFlow",
+      "Parameters": {"ContactFlowId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/contact-flow/29b96562-989a-4234-8906-c150df0342e6"},
+      "Transitions": {
+        "NextAction": "disconnect",
+        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}

@@ -31,13 +31,22 @@ def lambda_handler(event, context):
             SupportedMessagingContentTypes=['text/plain']
         )
 
+        participant_token = response['ParticipantToken']
+
+        # Store participant token as contact attribute so Lambda can fetch transcript
+        connect.update_contact_attributes(
+            InstanceId=INSTANCE_ID,
+            InitialContactId=response['ContactId'],
+            Attributes={'participantToken': participant_token}
+        )
+
         return {
             'statusCode': 200,
             'headers': HEADERS,
             'body': json.dumps({
                 'contactId': response['ContactId'],
                 'participantId': response['ParticipantId'],
-                'participantToken': response['ParticipantToken']
+                'participantToken': participant_token
             })
         }
     except Exception as e:

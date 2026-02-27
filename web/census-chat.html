@@ -488,6 +488,9 @@
                 hideTyping();
                 if (msg.ContentType === 'text/plain' && msg.Content &&
                     (msg.ParticipantRole === 'SYSTEM' || msg.ParticipantRole === 'AGENT' || msg.ParticipantRole === 'BOT')) {
+                    if (msg.Content.toLowerCase().includes('live agent') || msg.Content.toLowerCase().includes('connect you with')) {
+                        window._escalating = true;
+                    }
                     addMessage('bot', msg.Content);
                 }
             });
@@ -502,7 +505,15 @@
             });
 
             chatSession.onEnded(() => {
-                addMessage('bot', 'This chat session has ended. Refresh to start a new one.');
+                hideTyping();
+                // onEnded fires on agent transfer too — check if we're escalating
+                if (window._escalating) {
+                    addMessage('bot', 'You are now connected with a live agent.');
+                } else {
+                    addMessage('bot', 'This chat session has ended. Thank you for participating!');
+                }
+                document.getElementById('send-btn').disabled = true;
+                document.getElementById('chat-input').disabled = true;
             });
 
             // 4. Connect — this establishes the WebSocket
