@@ -182,7 +182,7 @@ MarcS-CensusDemo/
 | **GeneralAgent** | GeneralInquiries, SurveyCompletion | 1 | 3 |
 | **TechnicalSupport** | TechnicalSupport | 1 | 2 |
 | **SpanishAgent** | SpanishLanguage | 1 | 3 |
-| **Supervisor** | All queues | 2 | 5 |
+| **Supervisor** | All queues | 1 | 5 |
 
 ### Optional Components
 - **Lex Bot** - Natural language understanding

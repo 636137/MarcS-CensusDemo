@@ -316,7 +316,7 @@ Resources:
       DefaultOutboundQueueArn: !GetAtt EscalationsQueue.QueueArn
       MediaConcurrencies:
         - Channel: VOICE
-          Concurrency: 2
+          Concurrency: 1
         - Channel: CHAT
           Concurrency: 5
       QueueConfigs:
