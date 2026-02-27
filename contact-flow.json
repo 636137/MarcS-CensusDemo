@@ -84,11 +84,14 @@
     },
     {
       "Identifier": "transfer-to-agent",
-      "Type": "TransferToFlow",
-      "Parameters": {"ContactFlowId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/contact-flow/29b96562-989a-4234-8906-c150df0342e6"},
+      "Type": "TransferContactToQueue",
+      "Parameters": {},
       "Transitions": {
         "NextAction": "disconnect",
-        "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
+        "Errors": [
+          {"NextAction": "disconnect", "ErrorType": "NoMatchingError"},
+          {"NextAction": "disconnect", "ErrorType": "QueueAtCapacity"}
+        ],
         "Conditions": []
       }
     },
