@@ -35,8 +35,10 @@ cd MarcS-CensusDemo/cloudformation
 
 ### AI-Powered Self-Service
 - 🤖 **Bedrock Agent**: Claude Sonnet 4.6 with function calling (verifyAddress, saveSurveyData, generateConfirmation)
+- 🧵 **Strands AgentCore**: AWS Strands SDK agent — same tools, modern framework, selectable from web UI
 - 🔍 **Address Lookup**: Automatic phone-to-address resolution via DynamoDB
 - 📋 **Survey Collection**: Guided household data collection with confirmation numbers
+- 👋 **Auto Greeting**: Agent speaks first on every call and chat session
 
 ### Quality Assurance
 - 📊 **Contact Lens**: 20 rules (10 real-time, 10 post-call)
@@ -58,25 +60,23 @@ cd MarcS-CensusDemo/cloudformation
 ┌─────────────────────────────────┐
 │    Amazon Connect Instance      │
 │  census-enumerator-9652         │
-│  • Contact Flows                │
+│  • Contact Flow (Strands Agent) │
 │  • Queue Management             │
 │  • Contact Lens Analytics       │
 └──────┬──────────────────────────┘
        │
        ↓
 ┌─────────────────────────────────┐
-│    AWS Bedrock Agent            │
-│  CensusSurveyAgent (Claude 4.6) │
-│  • verifyAddress                │
-│  • saveSurveyData               │
-│  • generateConfirmation         │
+│    AI Agent Layer               │
+│  • CensusStrandsAgent (default) │  ← Strands AgentCore (AWS SDK)
+│  • CensusSurveyAgent (Bedrock)  │  ← Legacy Bedrock Agent
+│  Both use Claude Sonnet 4.6     │
 └──────┬──────────────────────────┘
        │
        ↓
 ┌─────────────────────────────────┐
 │      Backend Services           │
 │  • CensusAgentActions (Lambda)  │
-│  • CensusChatAPI (Lambda)       │
 │  • CensusResponses (DynamoDB)   │
 │  • CensusAddresses (DynamoDB)   │
 └─────────────────────────────────┘
@@ -89,10 +89,25 @@ cd MarcS-CensusDemo/cloudformation
 | Amazon Connect | census-enumerator-9652 (`1d3555df-0f7a-4c78-9177-d42253597de2`) |
 | Phone Number | +18332895330 (toll-free) |
 | Bedrock Agent | CensusSurveyAgent (`5KNBMLPHSV`) — Claude Sonnet 4.6 |
-| Lambda | CensusAgentActions (Python 3.11) |
-| Lambda | CensusChatAPI (Python 3.11) |
+| Lambda | CensusAgentActions (Python 3.11) — Bedrock Agent backend |
+| Lambda | CensusChatAPI (Python 3.11) — Bedrock Agent web chat |
+| Lambda | CensusStrandsAgent (Python 3.11) — Strands AgentCore |
 | DynamoDB | CensusResponses, CensusAddresses |
 | Web Chat | S3 static site |
+
+## 👤 Default Admin User
+
+| Field | Value |
+|-------|-------|
+| Username | `chendren` |
+| Name | Chad Hendren |
+| Email | chaddhendren@maximus.com |
+| Security Profile | Admin |
+| Routing Profile | Basic Routing Profile |
+| Phone | +14029732385 (Soft Phone) |
+| Temp Password | `Temp@<AccountId>` |
+
+Pre-loaded address record: **Chad Hendren, 123 Main St, Elkhorn, NE 68022** (phone `4029732385`)
 
 ## 🧪 Testing
 
@@ -147,4 +162,4 @@ cd cloudformation && ./cleanup.sh
 
 ---
 
-**Version**: 1.1.0 | **Region**: us-east-1 | **Last Updated**: 2026-02-27
+**Version**: 1.2.0 | **Region**: us-east-1 | **Last Updated**: 2026-02-27
