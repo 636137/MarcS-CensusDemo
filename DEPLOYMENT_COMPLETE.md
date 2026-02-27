@@ -19,12 +19,12 @@
 **Bedrock AI Agent**
 - Agent ID: 5KNBMLPHSV
 - Model: Claude Sonnet 4.6
-- Alias: FYO3N8QDLX (prod)
-- Status: PREPARED
+- Alias: TSTALIASID (active)
+- Status: PREPARED ✅
 
 **Lambda Functions**
-- CensusAgentActions (AI backend)
-- CensusChatAPI (web chat)
+- CensusAgentActions (Bedrock Agent backend)
+- CensusChatAPI (web chat — Bedrock Agent only)
 - All active and tested
 
 **DynamoDB Tables**
@@ -111,7 +111,7 @@ Then calls will have full AI conversation before agent transfer.
 | Queue Routing | ✅ Working | 5 queues |
 | Live Agents | ✅ Ready | CCP available |
 | Web Chat | ✅ Working | Full AI |
-| AI Chat (Direct) | ✅ Working | Claude 4.6 |
+| AI Chat (Direct) | ❌ Removed | Bedrock Agent only |
 | AI Chat (Agent) | ✅ Working | Bedrock Agent |
 | Address Lookup | ✅ Working | Lambda + DynamoDB |
 | Survey Storage | ✅ Working | DynamoDB |

@@ -5,73 +5,59 @@
 [![CloudFormation](https://img.shields.io/badge/IaC-CloudFormation-green)](https://aws.amazon.com/cloudformation/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Production-ready Amazon Connect contact center for U.S. Census Bureau survey collection, featuring AI-powered self-service, comprehensive quality assurance, and web-based chat interface.
+Production-ready Amazon Connect contact center for U.S. Census Bureau survey collection, featuring AI-powered self-service via AWS Bedrock Agent, comprehensive quality assurance, and web-based chat interface.
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone repository
 git clone https://github.com/636137/MarcS-CensusDemo.git
 cd MarcS-CensusDemo/cloudformation
 
-# Deploy everything (one command)
 ./deploy-full.sh
-
-# Add evaluation forms
 ./add-evaluation-forms.sh [INSTANCE_ID]
-
-# Add Contact Lens rules
 ./add-contact-lens-rules.sh [INSTANCE_ID]
-
-# Deploy AI agent
 ./add-ai-agent.sh
 ```
 
-## 📚 Documentation
+## 🎯 Live Demo
 
-- **[SOLUTION.md](SOLUTION.md)** - Comprehensive solution architecture and guide
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
-- **[AI_AGENT_SETUP.md](docs/AI_AGENT_SETUP.md)** - Bedrock Agent configuration
+| Channel | Details |
+|---------|---------|
+| 📞 Phone | +18332895330 (toll-free) |
+| 💬 Web Chat | http://census-chat-web-1772224618.s3-website-us-east-1.amazonaws.com/census-chat.html |
 
 ## ✨ Features
 
 ### Multi-Channel Support
-- 📞 **Phone (PSTN)**: Traditional phone support with IVR
-- 💬 **Web Chat**: Modern browser-based chat interface
+- 📞 **Phone (PSTN)**: Inbound calls with AI greeting and queue routing
+- 💬 **Web Chat**: Browser-based chat powered by Bedrock Agent
 - 🖥️ **Agent Desktop**: Amazon Connect CCP for live agents
 
 ### AI-Powered Self-Service
-- 🤖 **Bedrock Agent**: Advanced AI with function calling
-- 🧠 **Claude Sonnet 4.6**: Latest AI model for natural conversations
-- 🔄 **Dual-Mode Support**: Choose between Direct Claude or Bedrock Agent
-- ⚡ **Automatic Fallback**: Seamless degradation if agent unavailable
+- 🤖 **Bedrock Agent**: Claude Sonnet 4.6 with function calling (verifyAddress, saveSurveyData, generateConfirmation)
+- 🔍 **Address Lookup**: Automatic phone-to-address resolution via DynamoDB
+- 📋 **Survey Collection**: Guided household data collection with confirmation numbers
 
 ### Quality Assurance
 - 📊 **Contact Lens**: 20 rules (10 real-time, 10 post-call)
-- 📝 **Evaluation Forms**: 4 comprehensive QA forms (21 questions)
+- 📝 **Evaluation Forms**: 4 QA forms (21 questions)
 - 🎯 **Analytics**: Real-time sentiment and categorization
 
 ### Queue Management
 - 5 specialized queues (General, Survey, Technical, Spanish, Escalations)
-- 4 routing profiles (General, Technical, Spanish, Supervisor)
-- Intelligent routing based on skills and availability
-
-### Full Automation
-- ⚙️ **One-Command Deployment**: Complete infrastructure setup
-- 🧹 **Complete Cleanup**: Remove all resources with one script
-- 🧪 **Automated Testing**: Python scripts for validation
-- 🔄 **CI/CD Ready**: GitHub Actions integration
+- 4 routing profiles with skills-based routing
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────┐
-│   Users     │ (Phone, Web, Agent Desktop)
+│   Users     │ (Phone, Web Chat, Agent Desktop)
 └──────┬──────┘
        │
        ↓
 ┌─────────────────────────────────┐
 │    Amazon Connect Instance      │
+│  census-enumerator-9652         │
 │  • Contact Flows                │
 │  • Queue Management             │
 │  • Contact Lens Analytics       │
@@ -79,139 +65,86 @@ cd MarcS-CensusDemo/cloudformation
        │
        ↓
 ┌─────────────────────────────────┐
-│      AI & Automation Layer      │
-│  • Bedrock Agent (Claude 4.6)   │
-│  • Direct Claude Invocation     │
+│    AWS Bedrock Agent            │
+│  CensusSurveyAgent (Claude 4.6) │
+│  • verifyAddress                │
+│  • saveSurveyData               │
+│  • generateConfirmation         │
 └──────┬──────────────────────────┘
        │
        ↓
 ┌─────────────────────────────────┐
 │      Backend Services           │
-│  • Lambda Functions             │
-│  • DynamoDB Tables              │
-│  • S3 Storage                   │
-│  • API Gateway                  │
+│  • CensusAgentActions (Lambda)  │
+│  • CensusChatAPI (Lambda)       │
+│  • CensusResponses (DynamoDB)   │
+│  • CensusAddresses (DynamoDB)   │
 └─────────────────────────────────┘
 ```
 
-See [SOLUTION.md](SOLUTION.md) for detailed architecture diagrams.
+## 📦 Deployed Resources
 
-## 📦 Components
-
-### Amazon Connect
-- **Instance**: census-enumerator-9652
-- **Region**: us-east-1
-- **Features**: Contact Lens, Early Media, Auto-resolve voices
-
-### Bedrock AI Agent
-- **Agent ID**: 5KNBMLPHSV
-- **Model**: Claude Sonnet 4.6
-- **Actions**: verifyAddress, saveSurveyData, generateConfirmation
-
-### Lambda Functions
-- **CensusAgentActions**: AI agent backend (Python 3.11)
-- **CensusChatAPI**: Web chat API with dual-mode support (Python 3.11)
-
-### DynamoDB Tables
-- **CensusResponses**: Survey data storage
-- **CensusAddresses**: Phone-to-address lookup
-
-### Web Chat Interface
-- **Hosting**: S3 static website
-- **API**: API Gateway HTTP API
-- **Features**: Mode selector, real-time chat, typing indicators
+| Resource | Name / ID |
+|----------|-----------|
+| Amazon Connect | census-enumerator-9652 (`1d3555df-0f7a-4c78-9177-d42253597de2`) |
+| Phone Number | +18332895330 (toll-free) |
+| Bedrock Agent | CensusSurveyAgent (`5KNBMLPHSV`) — Claude Sonnet 4.6 |
+| Lambda | CensusAgentActions (Python 3.11) |
+| Lambda | CensusChatAPI (Python 3.11) |
+| DynamoDB | CensusResponses, CensusAddresses |
+| Web Chat | S3 static site |
 
 ## 🧪 Testing
 
-### Backend Tests
 ```bash
-python3 /tmp/comprehensive-test.py
-```
+# Test address lookup
+aws lambda invoke --function-name CensusAgentActions \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"actionGroup":"CensusSurveyActions","function":"verifyAddress","parameters":[{"name":"phoneNumber","value":"5555551234"}]}' \
+  --region us-east-1 output.json && cat output.json
 
-### Web Chat Tests
-```bash
-python3 /tmp/test-both-modes.py
-```
+# Test web chat API
+aws lambda invoke --function-name CensusChatAPI \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"body":"{\"sessionId\":\"test-001\",\"inputText\":\"Hello, I need to complete my census survey\"}"}' \
+  --region us-east-1 output.json && cat output.json
 
-### Manual Testing
-1. **Phone**: Call Connect instance number
-2. **Web Chat**: Open S3 website URL
-3. **Agent Desktop**: Log into Connect CCP
+# Check DynamoDB data
+aws dynamodb scan --table-name CensusAddresses --region us-east-1
+aws dynamodb scan --table-name CensusResponses --region us-east-1
+```
 
 ## 🔒 Security
 
-- **Encryption**: At rest (DynamoDB, S3) and in transit (TLS 1.2+)
-- **IAM**: Least privilege access policies
-- **Audit**: CloudTrail logging enabled
-- **Compliance**: PII redaction available
+- IAM least-privilege roles for all Lambda functions and Bedrock Agent
+- DynamoDB and S3 encryption at rest
+- TLS 1.2+ in transit
+- CloudTrail audit logging
 
-## 💰 Cost Estimate
+## 💰 Cost Estimate (~100 contacts/day)
 
-~$130/month for 100 contacts/day:
-- Amazon Connect: ~$30
-- Contact Lens: ~$90
-- Bedrock: ~$3
-- Lambda: <$1
-- DynamoDB: <$5
-- S3: <$1
+| Service | Monthly Cost |
+|---------|-------------|
+| Amazon Connect | ~$30 |
+| Contact Lens | ~$90 |
+| Bedrock AI | ~$3 |
+| Lambda + DynamoDB + S3 | <$7 |
+| **Total** | **~$130** |
 
-See [SOLUTION.md](SOLUTION.md) for detailed cost breakdown.
+## 📚 Documentation
 
-## 🔧 Troubleshooting
-
-Common issues and solutions in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
-
-Quick debug commands:
-```bash
-# Check Lambda logs
-aws logs tail /aws/lambda/CensusChatAPI --follow
-
-# Check DynamoDB data
-aws dynamodb scan --table-name CensusResponses --max-items 5
-
-# Test Lambda function
-aws lambda invoke --function-name CensusAgentActions \
-  --payload '{"actionGroup":"CensusSurveyActions","function":"verifyAddress","parameters":[{"name":"phoneNumber","value":"5555551234"}]}' \
-  output.json
-```
+- [SOLUTION.md](SOLUTION.md) — Full architecture and design
+- [DEPLOYMENT_COMPLETE.md](DEPLOYMENT_COMPLETE.md) — Deployment status and feature matrix
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Common issues and fixes
+- [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) — DR runbooks
+- [FEDRAMP_COMPLIANCE.md](FEDRAMP_COMPLIANCE.md) — Compliance notes
 
 ## 🗑️ Cleanup
 
-Remove all resources:
 ```bash
-./cleanup.sh
+cd cloudformation && ./cleanup.sh
 ```
-
-## 📈 Future Enhancements
-
-- Multi-language support (beyond Spanish)
-- SMS integration for notifications
-- Email confirmations
-- Mobile app (iOS/Android)
-- Voice biometrics
-- Predictive routing with ML
-
-## 🤝 Contributing
-
-Contributions welcome! Please open an issue or pull request.
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 📞 Support
-
-For questions or issues, please open a GitHub issue.
-
-## 🎯 Status
-
-✅ **Production Ready**  
-🚀 **Fully Automated**  
-🧪 **100% Tested**  
-📚 **Fully Documented**
 
 ---
 
-**Last Updated**: 2026-02-27  
-**Version**: 1.0.0  
-**Repository**: https://github.com/636137/MarcS-CensusDemo
+**Version**: 1.1.0 | **Region**: us-east-1 | **Last Updated**: 2026-02-27
