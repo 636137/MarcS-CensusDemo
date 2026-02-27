@@ -7,6 +7,8 @@
 
 Complete, production-ready Amazon Connect contact center for conducting census surveys with AI capabilities. Deploy a full contact center infrastructure in ~10 minutes using CloudFormation.
 
+**🚀 One-Command Deployment** | **📊 5 Queues & 4 Routing Profiles** | **🤖 AI-Powered** | **📋 20 Contact Lens Rules** | **✅ 4 QA Forms**
+
 ### What You Get
 
 | Component | Description |
@@ -19,6 +21,8 @@ Complete, production-ready Amazon Connect contact center for conducting census s
 | **Lex Bot** | Natural language understanding for voice interactions |
 | **S3 Storage** | Call recordings with 7-year retention |
 | **IAM Security** | Least-privilege roles and encryption at rest |
+| **Contact Lens Rules** | 20 real-time and post-call rules with automated categorization |
+| **Evaluation Forms** | 4 comprehensive QA forms (21 questions) for quality assurance |
 
 ## Quick Start (10 minutes)
 
@@ -129,15 +133,15 @@ aws cloudformation describe-stacks \
    - Channels → Phone numbers → Claim number
    - Select DID or toll-free
 
-5. **Import Contact Flow**
+6. **Import Contact Flow**
    - Routing → Contact flows → Create contact flow
    - Import: `cloudformation/simple-contact-flow.json`
    - Publish the flow
 
-6. **Assign Number to Flow**
+7. **Assign Number to Flow**
    - Phone numbers → Edit → Assign to contact flow
 
-7. **Test**
+8. **Test**
    - Call your number
    - Follow survey prompts
    - Check DynamoDB for responses
