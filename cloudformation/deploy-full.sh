@@ -4,6 +4,8 @@ set -e
 REGION="${AWS_REGION:-us-east-1}"
 STACK_NAME="census-connect"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+UNIQUE_SUFFIX=$((1000 + RANDOM % 9000))
+INSTANCE_ALIAS="census-enumerator-${UNIQUE_SUFFIX}"
 
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║     Census Enumerator - Automated Full Deployment           ║"
@@ -11,6 +13,7 @@ echo "╚═══════════════════════�
 echo ""
 echo "Account: $ACCOUNT_ID"
 echo "Region: $REGION"
+echo "Instance: $INSTANCE_ALIAS"
 echo ""
 
 # Step 1: Package Lambda
@@ -28,6 +31,7 @@ echo "2. Deploying infrastructure..."
 aws cloudformation deploy \
   --template-file cloudformation/census-connect.yaml \
   --stack-name $STACK_NAME \
+  --parameter-overrides InstanceAlias=$INSTANCE_ALIAS \
   --capabilities CAPABILITY_IAM \
   --region $REGION \
   --no-fail-on-empty-changeset
