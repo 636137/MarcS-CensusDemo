@@ -134,3 +134,62 @@ Contact Flow (IVR)
 **AI Voice**: ⚠️ Requires Amazon Q enablement  
 
 The voice infrastructure is production-ready for live agent calls. AI voice requires Amazon Q enablement (5-minute manual step in console).
+
+## ✅ Contact Flow Updated (2026-02-27)
+
+### Current Configuration
+
+**Contact Flow**: Census Survey Flow  
+**Flow ID**: 4ed0dc27-6319-47e6-b98d-71cac718e656  
+**Status**: Active
+
+### Call Flow
+
+When someone calls +18332895330:
+
+1. **Greeting** (Automated)
+   ```
+   "Thank you for calling the U.S. Census Bureau.
+    This call may be recorded for quality assurance.
+    Please stay on the line and one of our representatives
+    will assist you with completing your census survey."
+   ```
+
+2. **Queue Routing**
+   - Placed in GeneralInquiries queue
+   - Hold music plays while waiting
+   - Call recording starts
+
+3. **Agent Connection**
+   - Connected to first available agent
+   - Agent sees caller information
+   - Can use evaluation forms
+
+### Testing
+
+**As a Caller**:
+- Call: +18332895330
+- Listen to greeting
+- Wait for agent (or hear busy message if no agents)
+
+**As an Agent**:
+1. Log into Amazon Connect CCP
+2. Set status to "Available"
+3. Call +18332895330 from another phone
+4. Receive the call in CCP
+5. Complete survey with caller
+6. Use evaluation forms for QA
+
+### Contact Flow Features
+
+- ✅ Professional census greeting
+- ✅ Call recording enabled
+- ✅ Queue routing to GeneralInquiries
+- ✅ Hold music during wait
+- ✅ Agent transfer capability
+- ✅ Contact Lens analytics
+- ✅ Evaluation form integration
+
+### No Longer Default Simulation
+
+The phone number now uses a proper census-specific contact flow instead of the default Amazon Connect simulation flow.
