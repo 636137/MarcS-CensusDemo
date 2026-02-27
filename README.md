@@ -97,10 +97,22 @@ aws cloudformation describe-stacks \
    cd cloudformation
    ./add-contact-lens-rules.sh YOUR_INSTANCE_ID
    ```
-   This adds 20 evaluation forms for quality assurance:
-   - PII Detection, Script Compliance, Sentiment Analysis
-   - Escalation Detection, Callback Tracking, Language Barriers
-   - Data Verification, Customer Satisfaction, and more
+   This adds 20 Contact Lens rules with categories:
+   
+   **Real-time Rules (10):**
+   - PII Detection, Negative Sentiment, Escalation Requests
+   - Profanity Detection, Survey Refusals, Language Barriers
+   - Technical Issues, Callback Requests, Compliance Issues
+   - High-Priority Cases
+   
+   **Post-call Rules (10):**
+   - Script Compliance, Data Verification, Confirmation Numbers
+   - Survey Completion, Customer Satisfaction (Positive/Negative)
+   - Call Duration (Long/Short), Follow-up Required
+   - Privacy Compliance
+   
+   **Note:** Requires Contact Lens to be enabled on the instance.
+   Enable in Connect console: Analytics and optimization → Contact Lens
 
 4. **Claim Phone Number**
    - Channels → Phone numbers → Claim number
@@ -197,8 +209,9 @@ MarcS-CensusDemo/
 ### Optional Components
 - **Lex Bot** - Natural language understanding
 - **Bedrock Integration** - Generative AI responses
-- **Contact Lens** - Real-time analytics and sentiment
-- **20 Evaluation Forms** - Quality assurance and compliance tracking
+- **Contact Lens** - Real-time analytics and sentiment (requires manual enablement)
+- **20 Evaluation Forms** - Quality assurance forms (script provided)
+- **20 Contact Lens Rules** - Real-time alerts and post-call categories (script provided)
 
 ## Testing
 
