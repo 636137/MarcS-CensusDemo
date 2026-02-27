@@ -1,0 +1,88 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "StartAI",
+  "Metadata": {
+    "entryPointPosition": {"x": 20, "y": 20},
+    "snapToGrid": false
+  },
+  "Actions": [
+    {
+      "Identifier": "StartAI",
+      "Type": "UpdateContactRecordingBehavior",
+      "Parameters": {
+        "RecordingBehaviorOption": "Enable"
+      },
+      "Transitions": {
+        "NextAction": "InvokeAI"
+      }
+    },
+    {
+      "Identifier": "InvokeAI",
+      "Type": "ConnectParticipantWithLexBot",
+      "Parameters": {
+        "Text": "Thank you for calling the U.S. Census Bureau. I'm your AI assistant and I'll help you complete your census survey today.",
+        "LexBot": {
+          "Name": "AmazonQAssistant",
+          "Region": "us-east-1"
+        }
+      },
+      "Transitions": {
+        "NextAction": "CheckSuccess",
+        "Errors": [
+          {"NextAction": "TransferAgent", "ErrorType": "NoMatchingError"}
+        ],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "CheckSuccess",
+      "Type": "CheckAttribute",
+      "Parameters": {
+        "Attribute": "SurveyComplete",
+        "ComparisonValue": "true"
+      },
+      "Transitions": {
+        "NextAction": "ThankYou",
+        "Errors": [],
+        "Conditions": [
+          {"NextAction": "TransferAgent", "Condition": {"Operator": "Equals", "Operands": ["false"]}}
+        ]
+      }
+    },
+    {
+      "Identifier": "ThankYou",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for completing your census survey. Goodbye."
+      },
+      "Transitions": {
+        "NextAction": "Disconnect"
+      }
+    },
+    {
+      "Identifier": "TransferAgent",
+      "Type": "UpdateContactTargetQueue",
+      "Parameters": {
+        "QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/f730136d-1810-4f3f-9ee0-bd75d9453b09"
+      },
+      "Transitions": {
+        "NextAction": "Transfer",
+        "Errors": [{"NextAction": "Disconnect", "ErrorType": "NoMatchingError"}]
+      }
+    },
+    {
+      "Identifier": "Transfer",
+      "Type": "TransferParticipantToQueue",
+      "Parameters": {},
+      "Transitions": {
+        "NextAction": "Disconnect",
+        "Errors": [{"NextAction": "Disconnect", "ErrorType": "QueueAtCapacity"}]
+      }
+    },
+    {
+      "Identifier": "Disconnect",
+      "Type": "DisconnectParticipant",
+      "Parameters": {}
+    }
+  ]
+}
