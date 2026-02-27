@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Census Enumerator - Complete Amazon Connect Contact Center with AI Agent'
+
+Parameters:
+  InstanceAlias:
+    Type: String
+    Default: census-enumerator-1050
+    Description: Unique alias for Amazon Connect instance
+  
+  AdminEmail:
+    Type: String
+    Description: Email for admin user
+    Default: admin@example.com
+
+Resources:
+  # DynamoDB Tables
+  CensusResponsesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CensusResponses
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: caseId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: caseId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  CensusAddressesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CensusAddresses
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: addressId
+          AttributeType: S
+        - AttributeName: phoneNumber
+          AttributeType: S
+      KeySchema:
+        - AttributeName: addressId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PhoneNumberIndex
+          KeySchema:
+            - AttributeName: phoneNumber
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt CensusResponsesTable.Arn
+                  - !GetAtt CensusAddressesTable.Arn
+                  - !Sub '${CensusAddressesTable.Arn}/index/*'
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: '*'
+
+  # Lambda Function
+  CensusLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: CensusAgentBackend
+      Runtime: nodejs18.x
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CENSUS_TABLE_NAME: !Ref CensusResponsesTable
+          ADDRESS_TABLE_NAME: !Ref CensusAddressesTable
+      Code:
+        S3Bucket: !Sub 'census-lambda-${AWS::AccountId}'
+        S3Key: lambda.zip
+
+  # Connect Instance
+  ConnectInstance:
+    Type: AWS::Connect::Instance
+    Properties:
+      IdentityManagementType: CONNECT_MANAGED
+      InstanceAlias: !Ref InstanceAlias
+      Attributes:
+        InboundCalls: true
+        OutboundCalls: true
+        ContactflowLogs: true
+        ContactLens: true
+        AutoResolveBestVoices: true
+        EarlyMedia: true
+
+  # S3 Bucket for Call Recordings
+  CallRecordingsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'census-recordings-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldRecordings
+            Status: Enabled
+            ExpirationInDays: 2555
+
+  # Connect Storage Config
+  ConnectStorageConfig:
+    Type: AWS::Connect::InstanceStorageConfig
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      ResourceType: CALL_RECORDINGS
+      StorageType: S3
+      S3Config:
+        BucketName: !Ref CallRecordingsBucket
+        BucketPrefix: call-recordings
+
+  # Lambda Permission for Connect
+  ConnectLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CensusLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: connect.amazonaws.com
+      SourceArn: !GetAtt ConnectInstance.Arn
+
+  # Connect Hours of Operation
+  HoursOfOperation:
+    Type: AWS::Connect::HoursOfOperation
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: 24x7
+      TimeZone: America/New_York
+      Config:
+        - Day: MONDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: TUESDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: WEDNESDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: THURSDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: FRIDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: SATURDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+        - Day: SUNDAY
+          StartTime: { Hours: 0, Minutes: 0 }
+          EndTime: { Hours: 23, Minutes: 59 }
+
+  # Connect Queue
+  CensusQueue:
+    Type: AWS::Connect::Queue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: CensusQueue
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      MaxContacts: 100
+
+  # CloudWatch Log Group
+  ConnectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/connect/census-enumerator
+      RetentionInDays: 90
+
+Outputs:
+  ConnectInstanceId:
+    Value: !Ref ConnectInstance
+    Description: Amazon Connect Instance ID
+  
+  ConnectInstanceArn:
+    Value: !GetAtt ConnectInstance.Arn
+    Description: Amazon Connect Instance ARN
+  
+  ConnectAccessURL:
+    Value: !Sub 'https://${InstanceAlias}.my.connect.aws/connect/home'
+    Description: Amazon Connect Admin Console URL
+  
+  LambdaFunctionArn:
+    Value: !GetAtt CensusLambdaFunction.Arn
+    Description: Lambda Function ARN for Connect integration
+  
+  CensusTableName:
+    Value: !Ref CensusResponsesTable
+    Description: DynamoDB table for census responses
+  
+  AddressTableName:
+    Value: !Ref CensusAddressesTable
+    Description: DynamoDB table for address lookups
+  
+  RecordingsBucket:
+    Value: !Ref CallRecordingsBucket
+    Description: S3 bucket for call recordings

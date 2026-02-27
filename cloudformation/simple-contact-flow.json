@@ -1,0 +1,126 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "greeting",
+  "Actions": [
+    {
+      "Identifier": "greeting",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Hello! Thank you for calling the Census Bureau. I'm an automated assistant here to help complete your household census information."
+      },
+      "Transitions": {
+        "NextAction": "lookup_address",
+        "Errors": [],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "lookup_address",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusAgentBackend",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "action": "lookupAddress",
+          "phoneNumber": "$.CustomerEndpoint.Address"
+        },
+        "ResponseValidation": {
+          "ResponseType": "JSON"
+        }
+      },
+      "Transitions": {
+        "NextAction": "verify_address",
+        "Errors": [
+          {
+            "NextAction": "error_handler",
+            "ErrorType": "NoMatchingError"
+          }
+        ],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "verify_address",
+      "Type": "GetParticipantInput",
+      "Parameters": {
+        "Text": "I have your address on file. Is this correct? Say yes or no.",
+        "InputTimeLimitSeconds": "5",
+        "InputValidation": {
+          "CustomValidation": {
+            "MaximumLength": "50"
+          }
+        }
+      },
+      "Transitions": {
+        "NextAction": "collect_count",
+        "Errors": [],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "collect_count",
+      "Type": "GetParticipantInput",
+      "Parameters": {
+        "Text": "How many people were living in your household on April 1st, 2020?",
+        "InputTimeLimitSeconds": "5"
+      },
+      "Transitions": {
+        "NextAction": "save_survey",
+        "Errors": [],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "save_survey",
+      "Type": "InvokeLambdaFunction",
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:593804350786:function:CensusAgentBackend",
+        "InvocationTimeLimitSeconds": "8",
+        "LambdaInvocationAttributes": {
+          "action": "saveSurvey",
+          "householdCount": "$.StoredCustomerInput"
+        }
+      },
+      "Transitions": {
+        "NextAction": "confirmation",
+        "Errors": [
+          {
+            "NextAction": "error_handler",
+            "ErrorType": "NoMatchingError"
+          }
+        ],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "confirmation",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "Thank you for completing your census survey. Your information has been recorded. Goodbye."
+      },
+      "Transitions": {
+        "NextAction": "end_flow",
+        "Errors": [],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "error_handler",
+      "Type": "MessageParticipant",
+      "Parameters": {
+        "Text": "I'm sorry, we're experiencing technical difficulties. Please try again later or visit census.gov."
+      },
+      "Transitions": {
+        "NextAction": "end_flow",
+        "Errors": [],
+        "Conditions": []
+      }
+    },
+    {
+      "Identifier": "end_flow",
+      "Type": "DisconnectParticipant",
+      "Parameters": {},
+      "Transitions": {}
+    }
+  ]
+}

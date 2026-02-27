@@ -1,27 +1,59 @@
-# Census Enumerator AI Agent - Amazon Connect Deployment Guide
+# Census Enumerator AI Agent - Deployment Guide
 
 ## Overview
 
-This guide walks you through deploying the Census Enumerator AI Agent in Amazon Connect for both voice and chat channels. The agent uses Amazon Bedrock for generative AI capabilities and can be deployed using Amazon Connect's native AI Agent features or Amazon Lex with Bedrock integration.
+This guide walks you through deploying the Census Enumerator contact center using AWS CloudFormation.
+
+## Deployment Method
+
+**CloudFormation** is the recommended deployment method. The original Terraform configuration had compatibility issues with AWS provider resource types.
 
 ## Prerequisites
 
-- AWS Account with Amazon Connect instance provisioned
-- Amazon Bedrock access enabled in your region
-- IAM permissions for Connect, Bedrock, Lambda, and DynamoDB
-- (Optional) Amazon Lex bot for enhanced NLU capabilities
+- AWS Account with admin access
+- AWS CLI configured (`aws configure`)
+- Basic familiarity with Amazon Connect
 
-## Architecture Options
+## Quick Deployment (10 minutes)
 
-### Option 1: Amazon Connect AI Agents (Recommended)
-Uses native Amazon Q in Connect / AI Agent capabilities for the most streamlined deployment.
+### Step 1: Prepare Lambda Code
 
-### Option 2: Amazon Lex + Amazon Bedrock
-Uses Amazon Lex for intent classification with Bedrock for generative responses.
+```bash
+cd lambda
+zip lambda.zip index.js package.json
 
----
+# Create S3 bucket for Lambda code
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws s3 mb s3://census-lambda-${ACCOUNT_ID}
+aws s3 cp lambda.zip s3://census-lambda-${ACCOUNT_ID}/
+```
 
-## Deployment Steps
+### Step 2: Deploy CloudFormation Stack
+
+```bash
+cd ../cloudformation
+aws cloudformation create-stack \
+  --stack-name census-connect \
+  --template-body file://census-connect.yaml \
+  --capabilities CAPABILITY_IAM \
+  --region us-east-1
+```
+
+### Step 3: Wait for Completion
+
+```bash
+aws cloudformation wait stack-create-complete \
+  --stack-name census-connect \
+  --region us-east-1
+
+# Get outputs
+aws cloudformation describe-stacks \
+  --stack-name census-connect \
+  --query 'Stacks[0].Outputs' \
+  --output table
+```
+
+## Post-Deployment Configuration
 
 ### Step 1: Configure Amazon Bedrock
 
