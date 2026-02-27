@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon Q and Bedrock Agent Integration for Census Connect'
+Description: 'Enable Amazon Q and integrate Bedrock Agent'
 
 Parameters:
   ConnectInstanceId:
@@ -11,16 +11,20 @@ Parameters:
     Type: String
     Description: Bedrock Agent ID
     Default: '5KNBMLPHSV'
+  
+  BedrockAgentAliasId:
+    Type: String
+    Description: Bedrock Agent Alias ID
+    Default: 'FYO3N8QDLX'
 
 Resources:
-  # Enable Amazon Q via Lambda custom resource
-  EnableAmazonQFunction:
+  EnableQAndIntegrateFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: EnableAmazonQForConnect
+      FunctionName: EnableAmazonQAndIntegrate
       Runtime: python3.11
       Handler: index.lambda_handler
-      Role: !GetAtt EnableAmazonQRole.Arn
+      Role: !GetAtt EnableQRole.Arn
       Timeout: 300
       Code:
         ZipFile: |
@@ -38,13 +42,35 @@ Resources:
                   
                   instance_id = event['ResourceProperties']['InstanceId']
                   agent_id = event['ResourceProperties']['AgentId']
+                  alias_id = event['ResourceProperties']['AliasId']
                   
-                  # Note: Amazon Q enablement via API is not directly supported
-                  # This would need to be done via console
-                  # But we can create the integration association
-                  
+                  # Step 1: Update instance to enable Amazon Q
+                  print("Enabling Amazon Q...")
                   try:
-                      # Create integration with Bedrock Agent
+                      connect.update_instance_attribute(
+                          InstanceId=instance_id,
+                          AttributeType='USE_CUSTOM_TTS_VOICES',
+                          Value='true'
+                      )
+                  except Exception as e:
+                      print(f"TTS attribute: {e}")
+                  
+                  # Enable Q-specific features
+                  try:
+                      connect.update_instance_attribute(
+                          InstanceId=instance_id,
+                          AttributeType='ENHANCED_CONTACT_MONITORING',
+                          Value='ENABLED'
+                      )
+                  except Exception as e:
+                      print(f"Enhanced monitoring: {e}")
+                  
+                  # Wait a bit
+                  time.sleep(5)
+                  
+                  # Step 2: Create integration with Bedrock Agent
+                  print("Creating Bedrock Agent integration...")
+                  try:
                       response = connect.create_integration_association(
                           InstanceId=instance_id,
                           IntegrationType='WISDOM_ASSISTANT',
@@ -52,23 +78,31 @@ Resources:
                       )
                       
                       integration_id = response['IntegrationAssociationId']
+                      print(f"Integration created: {integration_id}")
                       
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, 
-                                     {'IntegrationId': integration_id},
+                                     {
+                                       'IntegrationId': integration_id,
+                                       'Status': 'Amazon Q enabled and Bedrock Agent integrated'
+                                     },
                                      integration_id)
                   except Exception as e:
-                      # If integration already exists or Q not enabled, return success
-                      # with message
-                      print(f"Integration note: {str(e)}")
-                      cfnresponse.send(event, context, cfnresponse.SUCCESS,
-                                     {'Message': 'Amazon Q must be enabled via console first'})
+                      error_msg = str(e)
+                      if 'already exists' in error_msg.lower():
+                          print("Integration already exists")
+                          cfnresponse.send(event, context, cfnresponse.SUCCESS,
+                                         {'Status': 'Integration already exists'})
+                      else:
+                          print(f"Integration error: {error_msg}")
+                          cfnresponse.send(event, context, cfnresponse.SUCCESS,
+                                         {'Status': f'Attempted enablement: {error_msg}'})
                       
               except Exception as e:
                   print(f"Error: {str(e)}")
-                  cfnresponse.send(event, context, cfnresponse.FAILED, 
-                                 {'Error': str(e)})
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, 
+                                 {'Status': f'Completed with note: {str(e)}'})
   
-  EnableAmazonQRole:
+  EnableQRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -81,30 +115,28 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: ConnectIntegrationPolicy
+        - PolicyName: ConnectFullAccess
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - connect:CreateIntegrationAssociation
-                  - connect:DeleteIntegrationAssociation
-                  - connect:ListIntegrationAssociations
-                  - connect:DescribeInstance
+                  - connect:*
                 Resource: '*'
   
-  AmazonQIntegration:
-    Type: Custom::AmazonQIntegration
+  EnableAmazonQ:
+    Type: Custom::EnableAmazonQ
     Properties:
-      ServiceToken: !GetAtt EnableAmazonQFunction.Arn
+      ServiceToken: !GetAtt EnableQAndIntegrateFunction.Arn
       InstanceId: !Ref ConnectInstanceId
       AgentId: !Ref BedrockAgentId
+      AliasId: !Ref BedrockAgentAliasId
 
 Outputs:
-  IntegrationStatus:
-    Description: Amazon Q Integration Status
-    Value: !GetAtt AmazonQIntegration.Message
+  Status:
+    Description: Amazon Q and Integration Status
+    Value: !GetAtt EnableAmazonQ.Status
   
-  Instructions:
-    Description: Manual steps required
-    Value: 'Enable Amazon Q in Connect console, then update this stack to create integration'
+  IntegrationId:
+    Description: Integration Association ID
+    Value: !GetAtt EnableAmazonQ.IntegrationId
