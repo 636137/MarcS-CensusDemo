@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Add-on: Claim toll-free number for Census Connect instance'
+
+Parameters:
+  ConnectInstanceId:
+    Type: String
+    Description: Amazon Connect Instance ID
+  
+  ContactFlowId:
+    Type: String
+    Description: Contact Flow ID to associate with phone number
+
+Resources:
+  # Note: Phone number claiming via CloudFormation is not directly supported
+  # Use the complete-voice-setup.sh script instead
+  
+  PhoneNumberClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ClaimConnectPhoneNumber
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt PhoneNumberClaimRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          
+          connect = boto3.client('connect')
+          
+          def lambda_handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      # Release phone number on stack deletion
+                      phone_id = event.get('PhysicalResourceId')
+                      if phone_id and phone_id != 'NONE':
+                          connect.release_phone_number(PhoneNumberId=phone_id)
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+                  
+                  instance_id = event['ResourceProperties']['InstanceId']
+                  contact_flow_id = event['ResourceProperties']['ContactFlowId']
+                  
+                  # Search for available number
+                  response = connect.search_available_phone_numbers(
+                      TargetArn=f"arn:aws:connect:us-east-1:593804350786:instance/{instance_id}",
+                      PhoneNumberCountryCode='US',
+                      PhoneNumberType='TOLL_FREE',
+                      MaxResults=1
+                  )
+                  
+                  if not response['AvailableNumbersList']:
+                      cfnresponse.send(event, context, cfnresponse.FAILED, 
+                                     {'Error': 'No available numbers'})
+                      return
+                  
+                  phone_number = response['AvailableNumbersList'][0]['PhoneNumber']
+                  
+                  # Claim the number
+                  claim_response = connect.claim_phone_number(
+                      TargetArn=f"arn:aws:connect:us-east-1:593804350786:instance/{instance_id}",
+                      PhoneNumber=phone_number,
+                      PhoneNumberDescription='Census Bureau Survey Line'
+                  )
+                  
+                  phone_id = claim_response['PhoneNumberId']
+                  
+                  # Associate with contact flow
+                  connect.associate_phone_number_contact_flow(
+                      PhoneNumberId=phone_id,
+                      InstanceId=instance_id,
+                      ContactFlowId=contact_flow_id
+                  )
+                  
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, 
+                                 {'PhoneNumber': phone_number, 'PhoneNumberId': phone_id},
+                                 phone_id)
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  cfnresponse.send(event, context, cfnresponse.FAILED, 
+                                 {'Error': str(e)})
+  
+  PhoneNumberClaimRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ConnectPhoneNumberPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - connect:SearchAvailablePhoneNumbers
+                  - connect:ClaimPhoneNumber
+                  - connect:ReleasePhoneNumber
+                  - connect:AssociatePhoneNumberContactFlow
+                  - connect:DisassociatePhoneNumberContactFlow
+                Resource: '*'
+  
+  ClaimedPhoneNumber:
+    Type: Custom::PhoneNumber
+    Properties:
+      ServiceToken: !GetAtt PhoneNumberClaimFunction.Arn
+      InstanceId: !Ref ConnectInstanceId
+      ContactFlowId: !Ref ContactFlowId
+
+Outputs:
+  PhoneNumber:
+    Description: Claimed toll-free phone number
+    Value: !GetAtt ClaimedPhoneNumber.PhoneNumber
+  
+  PhoneNumberId:
+    Description: Phone number ID
+    Value: !GetAtt ClaimedPhoneNumber.PhoneNumberId
