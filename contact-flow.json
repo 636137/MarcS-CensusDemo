@@ -75,7 +75,7 @@
     {
       "Identifier": "set-queue",
       "Type": "UpdateContactTargetQueue",
-      "Parameters": {"QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/f730136d-1810-4f3f-9ee0-bd75d9453b09"},
+      "Parameters": {"QueueId": "arn:aws:connect:us-east-1:593804350786:instance/1d3555df-0f7a-4c78-9177-d42253597de2/queue/e782af1e-ea59-4428-bb30-51ccb607f49b"},
       "Transitions": {
         "NextAction": "transfer-to-agent",
         "Errors": [{"NextAction": "disconnect", "ErrorType": "NoMatchingError"}],
