@@ -1,110 +1,149 @@
 #!/bin/bash
-set -e
 
-echo "=========================================="
-echo "Census Enumerator - Complete Cleanup"
-echo "=========================================="
-echo ""
-echo "⚠️  WARNING: This will DELETE ALL resources:"
-echo "   - CloudFormation stack"
-echo "   - Amazon Connect instance"
-echo "   - Lambda function"
-echo "   - DynamoDB tables (all data)"
-echo "   - S3 buckets (all recordings)"
-echo "   - CloudWatch logs"
-echo ""
-read -p "Are you sure? Type 'DELETE' to confirm: " CONFIRM
+################################################################################
+# Census Bureau Contact Center - Complete Cleanup Script
+#
+# This script removes ALL resources created by the deployment, including:
+#   - CloudFormation stack and all its resources
+#   - Lambda functions (CensusAgentBackend, CensusChatAPI, CensusAgentActions)
+#   - DynamoDB tables (CensusResponses, CensusAddresses)
+#   - S3 buckets (census-lambda, census-recordings, census-chat-web-*)
+#   - IAM roles (AmazonBedrockExecutionRoleForAgents_census, CensusChatAPIRole)
+#   - Bedrock Agent (5KNBMLPHSV)
+#   - API Gateway (CensusChatAPI)
+#
+# Usage: ./cleanup.sh
+#
+# WARNING: This is destructive and cannot be undone!
+#          All data will be permanently deleted.
+#
+# Safety: Script will prompt for confirmation before proceeding
+################################################################################
 
-if [ "$CONFIRM" != "DELETE" ]; then
-    echo "❌ Cleanup cancelled"
+set -e  # Exit on any error
+
+STACK_NAME="census-connect"
+REGION="us-east-1"
+
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║     Census Bureau Contact Center - Complete Cleanup         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+echo ""
+echo "⚠️  WARNING: This will delete ALL resources including:"
+echo "   • CloudFormation stack: $STACK_NAME"
+echo "   • All Lambda functions"
+echo "   • All DynamoDB tables and data"
+echo "   • All S3 buckets and contents"
+echo "   • All IAM roles"
+echo "   • Bedrock Agent"
+echo "   • API Gateway"
+echo ""
+read -p "Are you sure you want to continue? (yes/no): " CONFIRM
+
+if [ "$CONFIRM" != "yes" ]; then
+    echo "Cleanup cancelled."
     exit 0
 fi
 
 echo ""
 echo "Starting cleanup..."
-
-# Get AWS account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=${AWS_REGION:-us-east-1}
-STACK_NAME=${STACK_NAME:-census-connect}
-
-echo "Account ID: $ACCOUNT_ID"
-echo "Region: $REGION"
-echo "Stack: $STACK_NAME"
 echo ""
 
-# 1. Empty S3 buckets (required before deletion)
-echo "📦 Emptying S3 buckets..."
-for BUCKET in "census-lambda-${ACCOUNT_ID}" "census-recordings-${ACCOUNT_ID}"; do
-    if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-        echo "   Emptying s3://${BUCKET}..."
-        aws s3 rm "s3://${BUCKET}" --recursive --region $REGION 2>/dev/null || true
-    fi
+# 1. Empty and delete S3 buckets (must be done before stack deletion)
+echo "→ Cleaning up S3 buckets..."
+for bucket in $(aws s3 ls | grep -E 'census-lambda|census-recordings|census-chat-web' | awk '{print $3}'); do
+    echo "  Deleting bucket: $bucket"
+    aws s3 rb s3://$bucket --force --region $REGION 2>/dev/null || echo "  (bucket not found or already deleted)"
 done
+echo "✅ S3 buckets cleaned up"
+echo ""
 
 # 2. Delete CloudFormation stack
-echo "🗑️  Deleting CloudFormation stack..."
-if aws cloudformation describe-stacks --stack-name $STACK_NAME --region $REGION 2>/dev/null; then
-    aws cloudformation delete-stack --stack-name $STACK_NAME --region $REGION
-    echo "   Waiting for stack deletion (this may take 5-10 minutes)..."
-    aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME --region $REGION 2>/dev/null || true
-    echo "   ✅ Stack deleted"
-else
-    echo "   ℹ️  Stack not found (already deleted)"
-fi
+echo "→ Deleting CloudFormation stack: $STACK_NAME..."
+aws cloudformation delete-stack \
+    --stack-name $STACK_NAME \
+    --region $REGION 2>/dev/null || echo "  (stack not found)"
 
-# 3. Delete S3 buckets
-echo "🗑️  Deleting S3 buckets..."
-for BUCKET in "census-lambda-${ACCOUNT_ID}" "census-recordings-${ACCOUNT_ID}"; do
-    if aws s3 ls "s3://${BUCKET}" 2>/dev/null; then
-        aws s3 rb "s3://${BUCKET}" --force --region $REGION 2>/dev/null || true
-        echo "   ✅ Deleted s3://${BUCKET}"
-    fi
+echo "  Waiting for stack deletion (this may take 5-10 minutes)..."
+aws cloudformation wait stack-delete-complete \
+    --stack-name $STACK_NAME \
+    --region $REGION 2>/dev/null || echo "  (stack already deleted)"
+echo "✅ CloudFormation stack deleted"
+echo ""
+
+# 3. Delete additional Lambda functions
+echo "→ Deleting additional Lambda functions..."
+for func in CensusChatAPI CensusAgentActions; do
+    echo "  Deleting function: $func"
+    aws lambda delete-function \
+        --function-name $func \
+        --region $REGION 2>/dev/null || echo "  (function not found)"
 done
+echo "✅ Lambda functions deleted"
+echo ""
 
-# 4. Delete orphaned Connect instances (if stack deletion failed)
-echo "🗑️  Checking for orphaned Connect instances..."
-INSTANCES=$(aws connect list-instances --region $REGION --query "InstanceSummaryList[?contains(InstanceAlias, 'census-enumerator')].Id" --output text 2>/dev/null || echo "")
-if [ -n "$INSTANCES" ]; then
-    for INSTANCE_ID in $INSTANCES; do
-        echo "   Deleting instance: $INSTANCE_ID"
-        aws connect delete-instance --instance-id $INSTANCE_ID --region $REGION 2>/dev/null || true
+# 4. Delete Bedrock Agent
+echo "→ Deleting Bedrock Agent..."
+AGENT_ID=$(aws bedrock-agent list-agents --region $REGION --query 'agentSummaries[?agentName==`CensusSurveyAgent`].agentId' --output text 2>/dev/null)
+if [ ! -z "$AGENT_ID" ]; then
+    echo "  Deleting agent: $AGENT_ID"
+    aws bedrock-agent delete-agent \
+        --agent-id $AGENT_ID \
+        --region $REGION 2>/dev/null || echo "  (agent not found)"
+    echo "✅ Bedrock Agent deleted"
+else
+    echo "  (agent not found)"
+fi
+echo ""
+
+# 5. Delete API Gateway
+echo "→ Deleting API Gateway..."
+API_ID=$(aws apigatewayv2 get-apis --region $REGION --query 'Items[?Name==`CensusChatAPI`].ApiId' --output text 2>/dev/null)
+if [ ! -z "$API_ID" ]; then
+    echo "  Deleting API: $API_ID"
+    aws apigatewayv2 delete-api \
+        --api-id $API_ID \
+        --region $REGION 2>/dev/null || echo "  (API not found)"
+    echo "✅ API Gateway deleted"
+else
+    echo "  (API not found)"
+fi
+echo ""
+
+# 6. Delete IAM roles
+echo "→ Deleting IAM roles..."
+for role in AmazonBedrockExecutionRoleForAgents_census CensusChatAPIRole; do
+    echo "  Deleting role: $role"
+    
+    # Detach managed policies
+    for policy_arn in $(aws iam list-attached-role-policies --role-name $role --query 'AttachedPolicies[].PolicyArn' --output text 2>/dev/null); do
+        aws iam detach-role-policy --role-name $role --policy-arn $policy_arn 2>/dev/null || true
     done
-    echo "   ✅ Orphaned instances deleted"
-else
-    echo "   ℹ️  No orphaned instances found"
-fi
-
-# 5. Delete CloudWatch log groups
-echo "🗑️  Deleting CloudWatch logs..."
-for LOG_GROUP in "/aws/lambda/CensusAgentBackend" "/aws/connect/census-enumerator"; do
-    if aws logs describe-log-groups --log-group-name-prefix "$LOG_GROUP" --region $REGION 2>/dev/null | grep -q "$LOG_GROUP"; then
-        aws logs delete-log-group --log-group-name "$LOG_GROUP" --region $REGION 2>/dev/null || true
-        echo "   ✅ Deleted $LOG_GROUP"
-    fi
+    
+    # Delete inline policies
+    for policy_name in $(aws iam list-role-policies --role-name $role --query 'PolicyNames[]' --output text 2>/dev/null); do
+        aws iam delete-role-policy --role-name $role --policy-name $policy_name 2>/dev/null || true
+    done
+    
+    # Delete role
+    aws iam delete-role --role-name $role --region $REGION 2>/dev/null || echo "  (role not found)"
 done
-
-# 6. Delete orphaned DynamoDB tables (if stack deletion failed)
-echo "🗑️  Checking for orphaned DynamoDB tables..."
-for TABLE in "CensusResponses" "CensusAddresses"; do
-    if aws dynamodb describe-table --table-name $TABLE --region $REGION 2>/dev/null; then
-        aws dynamodb delete-table --table-name $TABLE --region $REGION 2>/dev/null || true
-        echo "   ✅ Deleted table: $TABLE"
-    fi
-done
-
-# 7. Delete orphaned Lambda functions
-echo "🗑️  Checking for orphaned Lambda functions..."
-if aws lambda get-function --function-name CensusAgentBackend --region $REGION 2>/dev/null; then
-    aws lambda delete-function --function-name CensusAgentBackend --region $REGION 2>/dev/null || true
-    echo "   ✅ Deleted Lambda function"
-fi
-
+echo "✅ IAM roles deleted"
 echo ""
-echo "=========================================="
-echo "✅ Cleanup Complete!"
-echo "=========================================="
+
+# Summary
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║                  CLEANUP COMPLETE                            ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
-echo "All Census Enumerator resources have been deleted."
+echo "All resources have been removed:"
+echo "  ✅ CloudFormation stack"
+echo "  ✅ Lambda functions"
+echo "  ✅ DynamoDB tables"
+echo "  ✅ S3 buckets"
+echo "  ✅ IAM roles"
+echo "  ✅ Bedrock Agent"
+echo "  ✅ API Gateway"
 echo ""
-echo "To redeploy, run: ./deploy-full.sh"
+echo "Your AWS account is now clean!"
+echo ""

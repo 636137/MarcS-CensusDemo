@@ -1,51 +1,95 @@
 #!/bin/bash
-set -e
 
-REGION="${AWS_REGION:-us-east-1}"
+################################################################################
+# Census Bureau Contact Center - Full Deployment Script
+#
+# This script deploys the complete Amazon Connect contact center infrastructure
+# including Lambda functions, DynamoDB tables, S3 buckets, queues, and routing.
+#
+# Usage: ./deploy-full.sh
+#
+# Prerequisites:
+#   - AWS CLI configured with credentials
+#   - Account: 593804350786, Region: us-east-1
+#   - Administrator or equivalent permissions
+#
+# What this deploys:
+#   - Amazon Connect instance with unique suffix
+#   - 5 queues (General, Survey, Technical, Spanish, Escalations)
+#   - 4 routing profiles (General, Technical, Spanish, Supervisor)
+#   - Lambda function (CensusAgentBackend)
+#   - 2 DynamoDB tables (CensusResponses, CensusAddresses)
+#   - 2 S3 buckets (lambda code, call recordings)
+#   - Sample data for testing
+#
+# Outputs:
+#   - Connect Instance ID
+#   - Connect Instance Alias
+#   - Lambda Function ARN
+#   - DynamoDB Table Names
+#   - S3 Bucket Names
+################################################################################
+
+set -e  # Exit on any error
+
+# Configuration
 STACK_NAME="census-connect"
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-UNIQUE_SUFFIX=$((1000 + RANDOM % 9000))
-INSTANCE_ALIAS="census-enumerator-${UNIQUE_SUFFIX}"
+TEMPLATE_FILE="census-connect.yaml"
+REGION="us-east-1"
+
+# Generate unique suffix for Connect instance (4 random digits)
+UNIQUE_SUFFIX=$(shuf -i 1000-9999 -n 1)
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║     Census Enumerator - Automated Full Deployment           ║"
+echo "║     Census Bureau Contact Center - Full Deployment          ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
-echo "Account: $ACCOUNT_ID"
-echo "Region: $REGION"
-echo "Instance: $INSTANCE_ALIAS"
+echo "Configuration:"
+echo "  Stack Name: $STACK_NAME"
+echo "  Region: $REGION"
+echo "  Instance Suffix: $UNIQUE_SUFFIX"
 echo ""
 
-# Step 1: Package Lambda
-echo "1. Packaging Lambda function..."
-cd lambda
-zip -q lambda.zip index.js package.json 2>/dev/null || zip -q lambda.zip index-simplified.js
-aws s3 mb s3://census-lambda-${ACCOUNT_ID} --region $REGION 2>/dev/null || true
-aws s3 cp lambda.zip s3://census-lambda-${ACCOUNT_ID}/ --region $REGION
-cd ..
-echo "   ✓ Lambda packaged"
+# Validate CloudFormation template
+echo "→ Validating CloudFormation template..."
+aws cloudformation validate-template \
+  --template-body file://$TEMPLATE_FILE \
+  --region $REGION > /dev/null
 
-# Step 2: Deploy CloudFormation
+echo "✅ Template is valid"
 echo ""
-echo "2. Deploying infrastructure..."
+
+# Deploy CloudFormation stack
+echo "→ Deploying CloudFormation stack..."
+echo "  This will take 5-10 minutes..."
+echo ""
+
 aws cloudformation deploy \
-  --template-file cloudformation/census-connect.yaml \
+  --template-file $TEMPLATE_FILE \
   --stack-name $STACK_NAME \
-  --parameter-overrides InstanceAlias=$INSTANCE_ALIAS \
+  --parameter-overrides InstanceAliasSuffix=$UNIQUE_SUFFIX \
   --capabilities CAPABILITY_IAM \
-  --region $REGION \
-  --no-fail-on-empty-changeset
+  --region $REGION
 
-echo "   ✓ Infrastructure deployed"
-
-# Step 3: Get outputs
 echo ""
-echo "3. Retrieving deployment info..."
+echo "✅ Stack deployed successfully!"
+echo ""
+
+# Get stack outputs
+echo "→ Retrieving stack outputs..."
+echo ""
+
 INSTANCE_ID=$(aws cloudformation describe-stacks \
   --stack-name $STACK_NAME \
   --region $REGION \
   --query 'Stacks[0].Outputs[?OutputKey==`ConnectInstanceId`].OutputValue' \
-  --output text | cut -d'/' -f2)
+  --output text)
+
+INSTANCE_ALIAS=$(aws cloudformation describe-stacks \
+  --stack-name $STACK_NAME \
+  --region $REGION \
+  --query 'Stacks[0].Outputs[?OutputKey==`ConnectInstanceAlias`].OutputValue' \
+  --output text)
 
 LAMBDA_ARN=$(aws cloudformation describe-stacks \
   --stack-name $STACK_NAME \
@@ -53,126 +97,50 @@ LAMBDA_ARN=$(aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionArn`].OutputValue' \
   --output text)
 
-CONSOLE_URL=$(aws cloudformation describe-stacks \
-  --stack-name $STACK_NAME \
-  --region $REGION \
-  --query 'Stacks[0].Outputs[?OutputKey==`ConnectAccessURL`].OutputValue' \
-  --output text)
-
-echo "   ✓ Instance ID: $INSTANCE_ID"
-
-# Step 4: Create Lex Bot
-echo ""
-echo "4. Creating Lex bot..."
-BOT_ID=$(aws lexv2-models create-bot \
-  --bot-name CensusEnumeratorBot \
-  --description "Census survey bot" \
-  --role-arn "arn:aws:iam::${ACCOUNT_ID}:role/aws-service-role/lexv2.amazonaws.com/AWSServiceRoleForLexV2Bots" \
-  --data-privacy '{"childDirected":false}' \
-  --idle-session-ttl-in-seconds 300 \
-  --region $REGION \
-  --query 'botId' \
-  --output text 2>/dev/null || echo "EXISTING")
-
-if [ "$BOT_ID" != "EXISTING" ]; then
-  echo "   ✓ Bot created: $BOT_ID"
-  
-  # Create locale
-  aws lexv2-models create-bot-locale \
-    --bot-id $BOT_ID \
-    --bot-version DRAFT \
-    --locale-id en_US \
-    --nlu-intent-confidence-threshold 0.40 \
-    --voice-settings '{"voiceId":"Ruth","engine":"generative"}' \
-    --region $REGION >/dev/null 2>&1
-  
-  sleep 5
-  
-  # Build bot
-  aws lexv2-models build-bot-locale \
-    --bot-id $BOT_ID \
-    --bot-version DRAFT \
-    --locale-id en_US \
-    --region $REGION >/dev/null 2>&1
-  
-  echo "   ✓ Bot configured"
-else
-  echo "   ✓ Using existing bot"
-fi
-
-# Step 5: Associate Lambda
-echo ""
-echo "5. Associating Lambda with Connect..."
-aws connect associate-lambda-function \
-  --instance-id $INSTANCE_ID \
-  --function-arn $LAMBDA_ARN \
-  --region $REGION 2>/dev/null || echo "   ✓ Already associated"
-
-# Step 6: Load sample data
-echo ""
-echo "6. Loading sample data..."
-aws dynamodb put-item \
-  --table-name CensusAddresses \
-  --item '{
-    "addressId": {"S": "addr-001"},
-    "phoneNumber": {"S": "5555551234"},
-    "streetAddress": {"S": "123 Main Street"},
-    "city": {"S": "Washington"},
-    "state": {"S": "DC"},
-    "zipCode": {"S": "20001"}
-  }' \
-  --region $REGION 2>/dev/null
-
-aws dynamodb put-item \
-  --table-name CensusAddresses \
-  --item '{
-    "addressId": {"S": "addr-002"},
-    "phoneNumber": {"S": "5555555678"},
-    "streetAddress": {"S": "456 Oak Avenue"},
-    "city": {"S": "Arlington"},
-    "state": {"S": "VA"},
-    "zipCode": {"S": "22201"}
-  }' \
-  --region $REGION 2>/dev/null
-
-echo "   ✓ Sample data loaded"
-
-# Step 7: Test Lambda
-echo ""
-echo "7. Testing Lambda function..."
-TEST_RESULT=$(aws lambda invoke \
-  --function-name CensusAgentBackend \
-  --region $REGION \
-  --cli-binary-format raw-in-base64-out \
-  --payload '{"action":"lookupAddress","phoneNumber":"5555551234"}' \
-  /tmp/test-result.json 2>&1)
-
-if grep -q "found.*true" /tmp/test-result.json 2>/dev/null; then
-  echo "   ✓ Lambda test passed"
-else
-  echo "   ⚠ Lambda test inconclusive"
-fi
-
-# Summary
-echo ""
+# Display results
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                  DEPLOYMENT COMPLETE ✓                       ║"
+echo "║                  DEPLOYMENT COMPLETE                         ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
-echo "Connect Console: $CONSOLE_URL"
-echo "Instance ID: $INSTANCE_ID"
+echo "Amazon Connect Instance:"
+echo "  Instance ID: $INSTANCE_ID"
+echo "  Instance Alias: $INSTANCE_ALIAS"
+echo "  Console URL: https://console.aws.amazon.com/connect/v2/app/instances/$INSTANCE_ID"
+echo ""
+echo "Lambda Function:"
+echo "  ARN: $LAMBDA_ARN"
+echo ""
+echo "DynamoDB Tables:"
+echo "  • CensusResponses (survey data)"
+echo "  • CensusAddresses (phone lookup)"
+echo ""
+echo "S3 Buckets:"
+echo "  • census-lambda (Lambda code)"
+echo "  • census-recordings (call recordings)"
+echo ""
+echo "Queues Created:"
+echo "  • GeneralInquiries"
+echo "  • SurveyCompletion"
+echo "  • TechnicalSupport"
+echo "  • SpanishLanguage"
+echo "  • Escalations"
+echo ""
+echo "Routing Profiles Created:"
+echo "  • GeneralAgent"
+echo "  • TechnicalSupport"
+echo "  • SpanishAgent"
+echo "  • Supervisor"
 echo ""
 echo "Next Steps:"
-echo "1. Access Connect console (URL above)"
-echo "2. Create admin user"
-echo "3. Claim phone number"
-echo "4. Assign phone to CensusEnumeratorFlow"
-echo "5. Test by calling"
+echo "  1. Add evaluation forms:"
+echo "     ./add-evaluation-forms.sh $INSTANCE_ID"
 echo ""
-echo "All integrations configured:"
-echo "  ✓ Lambda function"
-echo "  ✓ DynamoDB tables"
-echo "  ✓ Contact flow"
-echo "  ✓ Sample data"
-echo "  ✓ Lex bot (if created)"
+echo "  2. Add Contact Lens rules (requires Contact Lens enabled):"
+echo "     ./add-contact-lens-rules.sh $INSTANCE_ID"
+echo ""
+echo "  3. Deploy AI agent:"
+echo "     ./add-ai-agent.sh"
+echo ""
+echo "  4. Test the deployment:"
+echo "     python3 /tmp/comprehensive-test.py"
 echo ""

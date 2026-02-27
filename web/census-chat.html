@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Census Bureau Web Chat Interface
+  
+  This is a production-ready web chat interface for the U.S. Census Bureau
+  survey collection system. It features dual AI mode support, allowing users
+  to choose between Direct Claude Sonnet 4.6 or Bedrock Agent.
+  
+  Features:
+  - Professional Census Bureau theme
+  - Dual AI mode selector
+  - Real-time chat with typing indicators
+  - Mobile responsive design
+  - Dynamic mode badge
+  - Error handling with fallback
+  
+  Configuration:
+  Replace API_URL in the script section with your API Gateway endpoint
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U.S. Census Bureau - Complete Your Survey</title>
+    <style>
+        /* Base styles and reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Main container */
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        /* Header section */
+        .header {
+            background: #1e3a8a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { font-size: 16px; opacity: 0.9; }
+        
+        /* Content area */
+        .content { padding: 40px; }
+        
+        /* Info box with features */
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+        
+        .info-box h2 { color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
+        .info-box ul { list-style: none; padding-left: 0; }
+        .info-box li { padding: 8px 0; color: #1e40af; }
+        .info-box li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        /* AI Mode Selector */
+        .mode-selector {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        
+        .mode-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+        
+        .mode-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3b82f6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        /* Start chat button */
+        .chat-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .chat-button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        /* Chat widget (popup) */
+        #chat-widget {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            flex-direction: column;
+            z-index: 1000;
+        }
+        
+        #chat-widget.active { display: flex; }
+        
+        /* Chat header with mode badge */
+        .chat-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h3 { font-size: 18px; }
+        
+        .chat-mode-badge {
+            font-size: 11px;
+            background: #10b981;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+        
+        /* Messages area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .message.bot {
+            background: #eff6ff;
+            color: #1e40af;
+            margin-right: auto;
+        }
+        
+        .message.user {
+            background: #1e3a8a;
+            color: white;
+            margin-left: auto;
+        }
+        
+        /* Input area */
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .send-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .send-btn:hover { background: #059669; }
+        
+        .typing {
+            color: #6b7280;
+            font-style: italic;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ U.S. Census Bureau</h1>
+            <p>Complete Your Census Survey Online</p>
+        </div>
+        <div class="content">
+            <div class="info-box">
+                <h2>Quick & Easy Survey</h2>
+                <ul>
+                    <li>Takes only 2-3 minutes</li>
+                    <li>AI-powered assistance</li>
+                    <li>Secure and confidential</li>
+                    <li>Instant confirmation number</li>
+                </ul>
+            </div>
+            <div class="mode-selector">
+                <label for="ai-mode">Choose AI Assistant:</label>
+                <select id="ai-mode">
+                    <option value="direct">Claude Sonnet 4.6 (Direct)</option>
+                    <option value="agent">Bedrock Agent (Advanced)</option>
+                </select>
+            </div>
+            <button class="chat-button" onclick="startChat()">
+                💬 Start Survey Chat
+            </button>
+        </div>
+        <div class="footer">
+            Powered by Amazon Connect & AWS Bedrock AI
+        </div>
+    </div>
+
+    <div id="chat-widget">
+        <div class="chat-header">
+            <div>
+                <h3>Census Survey Assistant</h3>
+                <span class="chat-mode-badge" id="mode-badge">Direct</span>
+            </div>
+            <button class="close-btn" onclick="closeChat()">×</button>
+        </div>
+        <div class="chat-messages" id="messages"></div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chat-input" 
+                   placeholder="Type your message..." 
+                   onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Replace with your API Gateway URL
+        const API_URL = 'YOUR_API_GATEWAY_URL_HERE';
+        
+        let sessionId = 'web-' + Date.now();
+        let useAgent = false;
+
+        function startChat() {
+            const mode = document.getElementById('ai-mode').value;
+            useAgent = (mode === 'agent');
+            
+            const badge = document.getElementById('mode-badge');
+            badge.textContent = useAgent ? 'Bedrock Agent' : 'Direct Claude';
+            
+            document.getElementById('chat-widget').classList.add('active');
+            addMessage('bot', 'Hello! Welcome to the U.S. Census Bureau. I\'m here to help you complete your census survey. May I have your phone number to get started?');
+        }
+
+        function closeChat() {
+            document.getElementById('chat-widget').classList.remove('active');
+        }
+
+        function addMessage(type, text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.textContent = 'Assistant is typing...';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) typingDiv.remove();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+            showTyping();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        inputText: message,
+                        useAgent: useAgent
+                    })
+                });
+                
+                const data = await response.json();
+                hideTyping();
+                
+                const badge = document.getElementById('mode-badge');
+                if (data.method === 'bedrock-agent') {
+                    badge.textContent = 'Bedrock Agent';
+                    badge.style.background = '#10b981';
+                } else {
+                    badge.textContent = 'Direct Claude';
+                    badge.style.background = '#3b82f6';
+                }
+                
+                addMessage('bot', data.response || 'I apologize, but I\'m having trouble processing your request.');
+            } catch (error) {
+                hideTyping();
+                addMessage('bot', 'I apologize, but I\'m having trouble connecting. Please try calling us at 1-800-CENSUS or try again later.');
+                console.error('Error:', error);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
