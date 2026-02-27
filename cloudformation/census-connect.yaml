@@ -336,8 +336,68 @@ Resources:
             Channel: VOICE
             QueueArn: !GetAtt SurveyCompletionQueue.QueueArn
 
-  # CloudWatch Log Group
-  ConnectLogGroup:
+  # ── Default Admin User ──
+  DefaultAdminUser:
+    Type: AWS::Connect::User
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Username: chendren
+      Password: !Sub 'Temp@${AWS::AccountId}'
+      IdentityInfo:
+        FirstName: Chad
+        LastName: Hendren
+        Email: chaddhendren@maximus.com
+      PhoneConfig:
+        PhoneType: SOFT_PHONE
+        AutoAccept: false
+        DeskPhoneNumber: '+14029732385'
+        AfterContactWorkTimeLimit: 0
+      RoutingProfileArn: !Sub 'arn:aws:connect:${AWS::Region}:${AWS::AccountId}:instance/${ConnectInstance}/routing-profile/99750850-15b0-41bb-8a71-2799c8d8492a'
+      SecurityProfileArns:
+        - !Sub 'arn:aws:connect:${AWS::Region}:${AWS::AccountId}:instance/${ConnectInstance}/security-profile/993bc954-9199-477e-acc3-5ef78c3c9eaf'
+
+  # ── Seed DynamoDB with Chad Hendren's address ──
+  SeedDataFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: CensusSeedData
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          import boto3, json, cfnresponse
+          def handler(event, context):
+              if event['RequestType'] == 'Delete':
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+              try:
+                  dynamodb = boto3.resource('dynamodb')
+                  table = dynamodb.Table(event['ResourceProperties']['TableName'])
+                  table.put_item(Item={
+                      'addressId': 'addr-chad-hendren',
+                      'phoneNumber': '4029732385',
+                      'firstName': 'Chad',
+                      'lastName': 'Hendren',
+                      'streetAddress': '123 Main St',
+                      'city': 'Elkhorn',
+                      'state': 'NE',
+                      'zipCode': '68022',
+                      'countryCode': '1'
+                  })
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Status': 'Seeded'})
+              except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+  SeedDataCustomResource:
+    Type: Custom::SeedDynamoDB
+    DependsOn: CensusAddressesTable
+    Properties:
+      ServiceToken: !GetAtt SeedDataFunction.Arn
+      TableName: CensusAddresses
+
+
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/connect/census-enumerator
