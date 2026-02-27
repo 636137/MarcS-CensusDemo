@@ -342,6 +342,26 @@ aws health describe-events --filter services=CONNECT
 If everything is broken, start fresh:
 
 ```bash
+# Run automated cleanup
+cd cloudformation
+./cleanup.sh
+
+# Wait for confirmation, then redeploy
+./deploy-full.sh
+```
+
+The cleanup script handles:
+- Emptying S3 buckets
+- Deleting CloudFormation stack
+- Removing orphaned resources
+- Cleaning up logs
+
+**Manual cleanup (if script fails):**
+
+<details>
+<summary>Click to expand manual steps</summary>
+
+```bash
 # 1. Delete stack
 aws cloudformation delete-stack --stack-name census-connect
 aws cloudformation wait stack-delete-complete --stack-name census-connect
@@ -361,6 +381,8 @@ aws connect list-instances --query 'InstanceSummaryList[?InstanceAlias==`census-
 cd MarcS-CensusDemo/cloudformation
 ./deploy-full.sh
 ```
+
+</details>
 
 ## Known Limitations
 

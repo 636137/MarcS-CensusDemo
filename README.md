@@ -270,17 +270,43 @@ aws logs tail /aws/lambda/CensusAgentBackend --follow
 
 ## Cleanup
 
+### Complete Removal (One Command)
+
 ```bash
-# Delete CloudFormation stack (removes all resources)
+cd cloudformation
+./cleanup.sh
+```
+
+This removes **everything**:
+- CloudFormation stack
+- Amazon Connect instance
+- Lambda function
+- DynamoDB tables (all data)
+- S3 buckets (all recordings)
+- CloudWatch logs
+
+**Warning:** This is permanent and cannot be undone!
+
+### Manual Cleanup (Advanced)
+
+<details>
+<summary>Click to expand manual cleanup steps</summary>
+
+```bash
+# Delete CloudFormation stack
 aws cloudformation delete-stack \
   --stack-name census-connect \
   --region us-east-1
 
-# Delete S3 buckets
+# Empty and delete S3 buckets
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+aws s3 rm s3://census-lambda-${ACCOUNT_ID} --recursive
 aws s3 rb s3://census-lambda-${ACCOUNT_ID} --force
+aws s3 rm s3://census-recordings-${ACCOUNT_ID} --recursive
 aws s3 rb s3://census-recordings-${ACCOUNT_ID} --force
 ```
+
+</details>
 
 ## Documentation
 

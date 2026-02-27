@@ -99,13 +99,21 @@ The stack provides these outputs:
 
 ## Cleanup
 
+### Complete Removal
+
 ```bash
-aws cloudformation delete-stack \
-  --stack-name census-connect \
-  --region us-east-1
+./cleanup.sh
 ```
 
-Note: You may need to manually empty the S3 bucket before deletion.
+Removes all resources:
+- CloudFormation stack
+- S3 buckets (empties first)
+- Connect instances
+- DynamoDB tables
+- Lambda functions
+- CloudWatch logs
+
+**Warning:** Requires confirmation. Type 'DELETE' to proceed.
 
 ## Troubleshooting
 
