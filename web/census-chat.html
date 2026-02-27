@@ -453,42 +453,47 @@
 
     async function startChat() {
         document.getElementById('start-btn').classList.add('hidden');
-        document.getElementById('engine-select').parentElement.style.display = 'none';
         document.getElementById('messages').classList.add('active');
         document.getElementById('input-area').classList.add('active');
         showTyping();
 
         try {
-            // 1. Start Connect chat contact — goes through the same contact flow as voice
+            // 1. Start Connect chat contact
             const res = await fetch(START_CHAT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ displayName: 'Census Visitor' })
             });
-            const { participantToken, contactId } = await res.json();
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
 
-            // 2. Create participant connection via ChatJS
-            connect.ChatSession.setGlobalConfig({ loggerConfig: { useDefaultLogger: false } });
-            chatSession = connect.ChatSession.create({
-                chatDetails: { participantToken },
-                type: connect.ChatSession.SessionTypes.CUSTOMER,
-                options: { region: 'us-east-1' }
+            // 2. Create ChatJS session with correct chatDetails format
+            connect.ChatSession.setGlobalConfig({
+                loggerConfig: { useDefaultLogger: false },
+                region: 'us-east-1'
             });
 
-            await chatSession.connect();
+            chatSession = connect.ChatSession.create({
+                chatDetails: {
+                    contactId: data.contactId,
+                    participantId: data.participantId,
+                    participantToken: data.participantToken
+                },
+                options: { region: 'us-east-1' },
+                type: connect.ChatSession.SessionTypes.CUSTOMER
+            });
 
-            // 3. Listen for incoming messages
-            chatSession.onMessage(({ data }) => {
-                if (data.ParticipantRole === 'SYSTEM' || data.ParticipantRole === 'AGENT' || data.ParticipantRole === 'BOT') {
-                    hideTyping();
-                    if (data.ContentType === 'text/plain' && data.Content) {
-                        addMessage('bot', data.Content);
-                    }
+            // 3. Register event handlers BEFORE connecting
+            chatSession.onMessage(({ data: msg }) => {
+                hideTyping();
+                if (msg.ContentType === 'text/plain' && msg.Content &&
+                    (msg.ParticipantRole === 'SYSTEM' || msg.ParticipantRole === 'AGENT' || msg.ParticipantRole === 'BOT')) {
+                    addMessage('bot', msg.Content);
                 }
             });
 
-            chatSession.onTyping(({ data }) => {
-                if (data.ParticipantRole !== 'CUSTOMER') showTyping();
+            chatSession.onTyping(({ data: msg }) => {
+                if (msg.ParticipantRole !== 'CUSTOMER') showTyping();
             });
 
             chatSession.onConnectionBroken(() => {
@@ -496,13 +501,19 @@
                 addMessage('bot', 'Connection lost. Please refresh to start a new session.');
             });
 
+            chatSession.onEnded(() => {
+                addMessage('bot', 'This chat session has ended. Refresh to start a new one.');
+            });
+
+            // 4. Connect — this establishes the WebSocket
+            await chatSession.connect();
             hideTyping();
             document.getElementById('chat-input').focus();
 
         } catch (e) {
             hideTyping();
             addMessage('bot', 'Unable to connect. Please call +1-833-289-5330 or try again.');
-            console.error(e);
+            console.error('Chat connect error:', e);
         }
     }
 
@@ -546,6 +557,7 @@
         } catch (e) {
             hideTyping();
             addMessage('bot', 'Failed to send. Please try again.');
+            console.error('Send error:', e);
         }
     }
 
