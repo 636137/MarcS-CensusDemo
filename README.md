@@ -6,6 +6,18 @@ This code is proprietary to **Maximus**. **No public license is granted**. See [
 
 # Census Bureau Contact Center - Amazon Connect Demo
 
+## Repository Layout
+
+- `frontend/`
+- `backend/`
+- `infra/`
+
+## Local vs Deploy
+
+- Local: see `docs/how-to.md`
+- Deploy: see `infra/`
+
+
 [![AWS](https://img.shields.io/badge/AWS-Amazon%20Connect-orange)](https://aws.amazon.com/connect/)
 [![Bedrock](https://img.shields.io/badge/AWS-Bedrock%20AI-blue)](https://aws.amazon.com/bedrock/)
 [![CloudFormation](https://img.shields.io/badge/IaC-CloudFormation-green)](https://aws.amazon.com/cloudformation/)
