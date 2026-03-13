@@ -1,3 +1,9 @@
+## Proprietary Notice
+
+This code is proprietary to **Maximus**. **No public license is granted**. See [`NOTICE`](./NOTICE).
+
+---
+
 # Census Bureau Contact Center - Amazon Connect Demo
 
 [![AWS](https://img.shields.io/badge/AWS-Amazon%20Connect-orange)](https://aws.amazon.com/connect/)
